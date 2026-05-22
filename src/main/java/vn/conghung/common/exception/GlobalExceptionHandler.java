@@ -23,7 +23,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({TechnicalException.class, IntegrationException.class})
     public ResponseEntity<ApiResult<Void>> handleInfrastructureException(ApiException ex, HttpServletRequest request) {
 
-        log.error("Infrastructure/Integration failure at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        log.error("Infrastructure/Integration failure at {}: {}", 
+                sanitize(request.getRequestURI()), 
+                sanitize(ex.getMessage()), 
+                ex);
 
         return createErrorResponse(ex.responseCode(), ex.userMessage(), ex.httpStatus());
     }
@@ -32,7 +35,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> handleUnknownResultException(UnknownResultException ex, HttpServletRequest request) {
 
         log.error("Unknown transaction result at {}: txRef={}, extRef={}, corrId={}",
-                request.getRequestURI(), ex.transactionReference(), ex.externalReference(), ex.correlationId(), ex);
+                sanitize(request.getRequestURI()), 
+                sanitize(ex.transactionReference()), 
+                sanitize(ex.externalReference()), 
+                sanitize(ex.correlationId()), 
+                ex);
 
         return createErrorResponse(ex.responseCode(), ex.userMessage(), ex.httpStatus());
     }
@@ -40,7 +47,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiResult<Void>> handleApiException(ApiException ex, HttpServletRequest request) {
 
-        log.warn("Business exception at {}: {}", request.getRequestURI(), ex.getMessage());
+        log.warn("Business exception at {}: {}", 
+                sanitize(request.getRequestURI()), 
+                sanitize(ex.getMessage()));
 
         return createErrorResponse(ex.responseCode(), ex.userMessage(), ex.httpStatus());
     }
@@ -48,7 +57,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResult<Void>> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
 
-        log.warn("Validation error at {}: {}", request.getRequestURI(), ex.getMessage());
+        log.warn("Validation error at {}: {}", 
+                sanitize(request.getRequestURI()), 
+                sanitize(ex.getMessage()));
 
         List<String> errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(err -> err.getField() + " " + err.getDefaultMessage())
@@ -61,7 +72,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResult<Void>> handleGenericException(Exception ex, HttpServletRequest request) {
 
-        log.error("Unhandled exception at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        log.error("Unhandled exception at {}: {}", 
+                sanitize(request.getRequestURI()), 
+                sanitize(ex.getMessage()), 
+                ex);
 
         return createErrorResponse(ResponseCode.SYS_INTERNAL_ERROR, ResponseCode.SYS_INTERNAL_ERROR.defaultMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -73,5 +87,12 @@ public class GlobalExceptionHandler {
 
     private String getTraceId() {
         return MDC.get(TRACE_ID_KEY) != null ? MDC.get(TRACE_ID_KEY) : "unknown";
+    }
+
+    private String sanitize(String input) {
+        if (input == null) {
+            return null;
+        }
+        return input.replace('\n', '_').replace('\r', '_');
     }
 }

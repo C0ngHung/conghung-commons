@@ -158,6 +158,7 @@
                     <failOnError>false</failOnError>
                     <knownExploitedEnabled>false</knownExploitedEnabled>
                     <suppressionFile>suppression.xml</suppressionFile>
+                    <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
                 </configuration>
                 <executions>
                     <execution>
