@@ -57,6 +57,9 @@
         <sonar.java.spotbugs.reportPaths>target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
         <sonar.dependencyCheck.jsonReportPath>target/dependency-check-report.json</sonar.dependencyCheck.jsonReportPath>
         <sonar.dependencyCheck.htmlReportPath>target/dependency-check-report.html</sonar.dependencyCheck.htmlReportPath>
+
+        <!-- Fallback to prevent IDE 'Cannot resolve symbol' warning when env variable is not set locally -->
+        <env.NVD_API_KEY></env.NVD_API_KEY>
     </properties>
 
     <dependencies>
