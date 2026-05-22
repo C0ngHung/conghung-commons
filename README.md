@@ -65,7 +65,7 @@ Add the dependency:
 <dependency>
     <groupId>vn.conghung</groupId>
     <artifactId>conghung-commons</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.4</version>
 </dependency>
 ```
 
@@ -79,6 +79,95 @@ Configure authentication in `~/.m2/settings.xml`:
         <password>YOUR_GITHUB_PAT</password>
     </server>
 </servers>
+```
+
+### Checking Available Versions
+
+To check the list of all published versions, release notes, and inspect what version your application is currently running:
+
+1. **View Published Versions (GitHub Packages)**: Visit the public [c0nghung/conghung-commons Packages Page](https://github.com/c0nghung/conghung-commons/packages/) to see all published releases and snapshots.
+2. **View Release History (Changelog)**: Read the [CHANGELOG.md](CHANGELOG.md) in the root of this repository or navigate to the **Releases** tab on GitHub to see what bug fixes, features, or breaking changes are introduced in each version.
+3. **Verify Your Current Version (Local Application)**: If you want to check exactly what version of `conghung-commons` your microservice is currently resolving, run this command in your microservice's root directory:
+   ```bash
+   mvn dependency:tree -Dincludes=vn.conghung:conghung-commons
+   ```
+
+## Usage Examples
+
+This library is designed for instant plug-and-play integration. Here is how to leverage its core capabilities in your microservices:
+
+### 1. Centralized API Response Envelope (`ApiResult`)
+Return `ApiResult<T>` as your controller response. The `traceId` is automatically placed in MDC by `TraceIdFilter`, so retrieve it via `MDC.get("traceId")`:
+
+```java
+import org.slf4j.MDC;
+import vn.conghung.common.api.ApiResult;
+
+@RestController
+@RequestMapping("/api/v1/users")
+public class UserController {
+
+    @GetMapping("/{id}")
+    public ApiResult<UserResponse> getUser(@PathVariable Long id) {
+        UserResponse user = userService.findById(id);
+        // ApiResult.ok(data, traceId) → HTTP 200, code "0000"
+        return ApiResult.ok(user, MDC.get("traceId"));
+    }
+
+    @PostMapping
+    public ApiResult<UserResponse> createUser(@RequestBody @Valid CreateUserRequest req) {
+        UserResponse created = userService.create(req);
+        return ApiResult.ok("User created successfully", created, MDC.get("traceId"));
+    }
+}
+```
+
+### 2. Robust Exception Throwing & Centralized Handling
+Throw appropriate subclasses of `ApiException`. The included `GlobalExceptionHandler` (`@RestControllerAdvice`) automatically intercepts these, maps them to corresponding HTTP statuses, and logs them at correct severity levels without leaking system details:
+
+```java
+import vn.conghung.common.exception.BusinessException;
+import vn.conghung.common.exception.ResourceNotFoundException;
+import vn.conghung.common.exception.IntegrationException;
+import vn.conghung.common.exception.ResponseCode;
+
+// Domain rule violation → HTTP 422
+if (amount.compareTo(balance) > 0) {
+    throw new BusinessException(ResponseCode.REQ_VALIDATION_ERROR, "Insufficient balance for withdrawal");
+}
+
+// Resource absence → HTTP 404
+User user = repository.findById(id)
+    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+// External system failure → HTTP 502
+try {
+    paymentGateway.charge(order);
+} catch (TimeoutException e) {
+    throw new IntegrationException(
+        ResponseCode.SYS_INTERNAL_ERROR, "Payment gateway timeout",
+        "PAY-GW", correlationId, e
+    );
+}
+```
+
+### 3. End-to-End Log Traceability (MDC Synchronization)
+The `TraceIdFilter` (auto-registered as a `@Component`) automatically:
+1. Extracts the `X-Trace-Id` header from incoming requests (or generates a UUID if absent).
+2. Sanitizes the value to prevent log injection attacks.
+3. Places it in SLF4J MDC under key `traceId`.
+4. Sets the `X-Trace-Id` response header for downstream callers.
+
+To print `traceId` in your application logs, add to `application.properties`:
+
+```properties
+# Standard pattern including application name and traceId
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} %5p [${spring.application.name:},%X{traceId:-}] --- %logger{36} : %msg%n
+```
+
+Expected log output:
+```text
+2026-05-22 14:30:00  INFO [user-service,a1b2c3d4-e5f6-7890] --- UserController : Fetching user with id 123
 ```
 
 ## Design Principles
