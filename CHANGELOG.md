@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4](https://github.com/C0ngHung/conghung-commons/compare/v0.2.3...v0.2.4) (2026-05-22)
+
+
+### Bug Fixes
+
+* **release:** integrate github app token to unblock CI ([#13](https://github.com/C0ngHung/conghung-commons/issues/13)) ([757839b](https://github.com/C0ngHung/conghung-commons/commit/757839ba800ad3275eaa3c28a4a85922ef393d6b))
+* **release:** integrate github app token to unblock CI ([#14](https://github.com/C0ngHung/conghung-commons/issues/14)) ([1fcb8f2](https://github.com/C0ngHung/conghung-commons/commit/1fcb8f2574d920b2cad48be3e352be421ae98cfc))
+
 ## [0.2.3](https://github.com/C0ngHung/conghung-commons/compare/v0.2.2...v0.2.3) (2026-05-22)
 
 
