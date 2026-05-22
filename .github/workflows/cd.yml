@@ -1,0 +1,61 @@
+name: Continuous Delivery
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    name: Publish Maven Artifact to GitHub Packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full clone for SCM metadata integrity
+
+      - name: Extract Tag Version
+        id: get_version
+        run: |
+          # Extract version from tag (e.g. v1.2.3 -> 1.2.3)
+          TAG=${{ github.ref_name }}
+          VERSION=${TAG#v}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Publishing version ${VERSION}"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Update pom.xml Version
+        run: |
+          mvn -B versions:set -DnewVersion=${{ steps.get_version.outputs.version }} -DgenerateBackupPoms=false
+
+      - name: Run Verification & Audit
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          mvn -B clean verify \
+            -Dmaven.test.skip=false \
+            -Ddependency-check.skip=false \
+            -Dspotbugs.skip=false
+
+      - name: Deploy to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mvn -B deploy \
+            -Dmaven.test.skip=true \
+            -Ddependency-check.skip=true \
+            -Dspotbugs.skip=true
