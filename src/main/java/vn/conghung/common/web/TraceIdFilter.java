@@ -25,6 +25,12 @@ public class TraceIdFilter extends OncePerRequestFilter {
 
         if (traceId == null || traceId.isBlank()) {
             traceId = UUID.randomUUID().toString();
+        } else {
+            // Sanitize untrusted input to prevent HTTP Response Splitting / CRLF Injection (CWE-113)
+            traceId = traceId.replaceAll("[^a-zA-Z0-9\\-_\\.]", "");
+            if (traceId.isBlank()) {
+                traceId = UUID.randomUUID().toString();
+            }
         }
 
         MDC.put(TRACE_ID_KEY, traceId);
