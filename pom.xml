@@ -48,7 +48,7 @@
         <!-- DevSecOps Plugin Versions -->
         <spotbugs-maven-plugin.version>4.8.6.6</spotbugs-maven-plugin.version>
         <findsecbugs-plugin.version>1.13.0</findsecbugs-plugin.version>
-        <dependency-check-maven.version>12.1.0</dependency-check-maven.version>
+        <dependency-check-maven.version>12.2.2</dependency-check-maven.version>
 
         <!-- SonarCloud Integration -->
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
