@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2](https://github.com/C0ngHung/conghung-commons/compare/v0.2.1...v0.2.2) (2026-05-22)
+
+
+### Bug Fixes
+
+* **PROJ-4:** trigger release please with standard conventional commit format ([560e02d](https://github.com/C0ngHung/conghung-commons/commit/560e02d42a3edd5af387cb6779ed9656e76b4010))
+
 ## [0.2.0] - 2026-05-22
 
 ### Added
