@@ -48,8 +48,7 @@ jobs:
           mvn -B clean verify \
             -Dmaven.test.skip=false \
             -Ddependency-check.skip=false \
-            -Dspotbugs.skip=false \
-            -DnvdApiKey="${{ secrets.NVD_API_KEY }}"
+            -Dspotbugs.skip=false
 
       - name: Run SonarCloud Scan
         env:
