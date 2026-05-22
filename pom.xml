@@ -57,6 +57,7 @@
         <sonar.java.spotbugs.reportPaths>target/spotbugsXml.xml</sonar.java.spotbugs.reportPaths>
         <sonar.dependencyCheck.jsonReportPath>target/dependency-check-report.json</sonar.dependencyCheck.jsonReportPath>
         <sonar.dependencyCheck.htmlReportPath>target/dependency-check-report.html</sonar.dependencyCheck.htmlReportPath>
+
     </properties>
 
     <dependencies>
@@ -158,6 +159,7 @@
                     <failOnError>false</failOnError>
                     <knownExploitedEnabled>false</knownExploitedEnabled>
                     <suppressionFile>suppression.xml</suppressionFile>
+                    <!--suppress UnresolvedMavenProperty -->
                     <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
                 </configuration>
                 <executions>
