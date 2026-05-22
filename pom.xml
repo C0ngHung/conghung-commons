@@ -11,7 +11,7 @@
 
     <groupId>vn.conghung</groupId>
     <artifactId>conghung-commons</artifactId>
-    <version>0.2.2</version>
+    <version>0.2.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>conghung-commons</name>
