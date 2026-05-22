@@ -127,6 +127,7 @@
                     <xmlOutput>true</xmlOutput>
                     <spotbugsXmlOutputDirectory>${project.build.directory}</spotbugsXmlOutputDirectory>
                     <failOnError>false</failOnError>
+                    <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
                     <plugins>
                         <plugin>
                             <groupId>com.h3xstream.findsecbugs</groupId>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!--
+        Reviewed: 2026-05-22
+        Reason: All log parameters in GlobalExceptionHandler are sanitized via sanitize() method
+                which strips CR/LF characters. FindSecBugs cannot trace custom sanitizers
+                at bytecode level, resulting in false positives.
+        Risk: None — CRLF characters are replaced with '_' before reaching the logger.
+    -->
+    <Match>
+        <Class name="vn.conghung.common.exception.GlobalExceptionHandler"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+</FindBugsFilter>
