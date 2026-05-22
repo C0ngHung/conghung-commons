@@ -1,5 +1,11 @@
 # conghung-commons
 
+[![Continuous Integration](https://github.com/c0nghung/conghung-commons/actions/workflows/ci.yml/badge.svg)](https://github.com/c0nghung/conghung-commons/actions/workflows/ci.yml)
+[![Continuous Delivery](https://github.com/c0nghung/conghung-commons/actions/workflows/cd.yml/badge.svg)](https://github.com/c0nghung/conghung-commons/actions/workflows/cd.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=C0ngHung_conghung-commons&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=C0ngHung_conghung-commons)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=C0ngHung_conghung-commons&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=C0ngHung_conghung-commons)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=C0ngHung_conghung-commons&metric=bugs)](https://sonarcloud.io/summary/new_code?id=C0ngHung_conghung-commons)
+
 Lightweight shared infrastructure kernel for Spring Boot web applications.
 
 ## What's Included
