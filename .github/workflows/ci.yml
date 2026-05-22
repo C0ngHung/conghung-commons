@@ -58,4 +58,5 @@ jobs:
           mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.organization=c0nghung \
-            -Dsonar.projectKey=C0ngHung_conghung-commons
+            -Dsonar.projectKey=C0ngHung_conghung-commons \
+            -Dsonar.qualitygate.wait=true
