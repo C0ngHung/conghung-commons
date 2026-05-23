@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6](https://github.com/C0ngHung/conghung-commons/compare/v0.2.5...v0.2.6) (2026-05-23)
+
+
+### Documentation
+
+* **readme:** add snapshot vs release versioning explanation ([#20](https://github.com/C0ngHung/conghung-commons/issues/20)) ([34bdb5f](https://github.com/C0ngHung/conghung-commons/commit/34bdb5ff5e103e3f7c504e101453126878e16c48))
+
 ## [0.2.5](https://github.com/C0ngHung/conghung-commons/compare/v0.2.4...v0.2.5) (2026-05-22)
 
 
