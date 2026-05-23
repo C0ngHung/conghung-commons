@@ -92,6 +92,18 @@ To check the list of all published versions, release notes, and inspect what ver
    mvn dependency:tree -Dincludes=vn.conghung:conghung-commons
    ```
 
+### Understanding Maven Versions (SNAPSHOT vs. RELEASE)
+
+For developers consuming this library, it is vital to understand the difference between the two version types published in our package registry:
+
+| Version Type | Example | Stability | Mutability (Tính biến động) | Use Case |
+| :--- | :--- | :--- | :--- | :--- |
+| **SNAPSHOT** | `0.2.5-SNAPSHOT` | **Developmental (WIP)**. Active work-in-progress. Might contain breaking changes or untested code. | **Mutable (Khả biến)**. Multiple builds can be deployed under the same version. Maven automatically downloads the latest timestamped build. | Local integration, active collaboration, and pre-release testing between teams. |
+| **RELEASE** | `0.2.4` | **Stable (Production-Ready)**. Fully tested, secure, and static code. | **Immutable (Bất biến)**. Once published, the code can never change. Safe for production. | Production workloads, stable customer deployments. |
+
+> [!WARNING]
+> **Production Rule**: Never deploy a microservice to production with a dependency ending in `-SNAPSHOT`. Doing so violates the principle of **Build Reproducibility** (lặp lại quy trình build) and introduces the risk of pulling untested changes at compile time. Always use a finalized **RELEASE** version for production!
+
 ## Usage Examples
 
 This library is designed for instant plug-and-play integration. Here is how to leverage its core capabilities in your microservices:
