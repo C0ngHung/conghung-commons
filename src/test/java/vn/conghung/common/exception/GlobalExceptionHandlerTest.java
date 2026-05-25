@@ -1,17 +1,24 @@
 package vn.conghung.common.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import vn.conghung.common.api.ApiResult;
 import vn.conghung.common.api.ValidationError;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -123,6 +130,122 @@ class GlobalExceptionHandlerTest {
         assertTrue(details.contains(new ValidationError("amount", "must not be null")));
         assertTrue(details.contains(new ValidationError("currency", "must not be blank")));
         assertTrue(details.contains(new ValidationError("email", "Invalid value")));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleHttpMessageNotReadableException() {
+        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
+        when(ex.getMessage()).thenReturn("Invalid JSON structure");
+        
+        // Test with null specific cause message
+        Throwable mockCauseWithNullMsg = mock(Throwable.class);
+        when(mockCauseWithNullMsg.getMessage()).thenReturn(null);
+        when(ex.getMostSpecificCause()).thenReturn(mockCauseWithNullMsg);
+        
+        ResponseEntity<ApiResult<Void>> responseNullCause = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+        assertNotNull(responseNullCause);
+        assertEquals(HttpStatus.BAD_REQUEST, responseNullCause.getStatusCode());
+        assertEquals("1002", responseNullCause.getBody().result().responseCode());
+        List<ValidationError> detailsNull = (List<ValidationError>) responseNullCause.getBody().error().details();
+        assertEquals("Malformed JSON request or invalid fields format", detailsNull.get(0).message());
+
+        // Test with specific cause containing colon
+        Throwable causeWithColon = new RuntimeException("JSON parsing failed: Cannot deserialize value of type java.lang.Integer from String");
+        when(ex.getMostSpecificCause()).thenReturn(causeWithColon);
+        ResponseEntity<ApiResult<Void>> responseWithColon = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+        assertNotNull(responseWithColon);
+        List<ValidationError> detailsWithColon = (List<ValidationError>) responseWithColon.getBody().error().details();
+        assertEquals("Cannot deserialize value of type java.lang.Integer from String", detailsWithColon.get(0).message());
+
+        // Test with specific cause without colon
+        Throwable causeWithoutColon = new RuntimeException("Malformed UTF-8 characters");
+        when(ex.getMostSpecificCause()).thenReturn(causeWithoutColon);
+        ResponseEntity<ApiResult<Void>> responseWithoutColon = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+        assertNotNull(responseWithoutColon);
+        List<ValidationError> detailsWithoutColon = (List<ValidationError>) responseWithoutColon.getBody().error().details();
+        assertEquals("Malformed UTF-8 characters", detailsWithoutColon.get(0).message());
+    }
+
+    @Test
+    void testHandleHttpRequestMethodNotSupportedException() {
+        HttpRequestMethodNotSupportedException ex = mock(HttpRequestMethodNotSupportedException.class);
+        when(ex.getMethod()).thenReturn("GET");
+        when(ex.getMessage()).thenReturn("Request method 'GET' is not supported");
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpRequestMethodNotSupportedException(ex, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.METHOD_NOT_ALLOWED, response.getStatusCode());
+        assertEquals("1004", response.getBody().result().responseCode());
+        assertEquals("Request is semantically invalid", response.getBody().result().description());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleMethodArgumentTypeMismatchException() {
+        MethodArgumentTypeMismatchException ex = mock(MethodArgumentTypeMismatchException.class);
+        when(ex.getName()).thenReturn("amount");
+        doReturn(Integer.class).when(ex).getRequiredType();
+        when(ex.getValue()).thenReturn("abc");
+        when(ex.getMessage()).thenReturn("Failed to convert value 'abc' to required type 'Integer'");
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleMethodArgumentTypeMismatchException(ex, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("1005", response.getBody().result().responseCode());
+        
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        assertNotNull(details);
+        assertEquals(1, details.size());
+        assertEquals("amount", details.get(0).field());
+        assertEquals("Expected type: Integer, provided value: 'abc'", details.get(0).message());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleConstraintViolationException() {
+        ConstraintViolationException ex = mock(ConstraintViolationException.class);
+        ConstraintViolation<?> violation1 = mock(ConstraintViolation.class);
+        ConstraintViolation<?> violation2 = mock(ConstraintViolation.class);
+
+        Path path1 = mock(Path.class);
+        when(path1.toString()).thenReturn("createUser.email");
+        when(violation1.getPropertyPath()).thenReturn(path1);
+        when(violation1.getMessage()).thenReturn("must be a well-formed email address");
+
+        Path path2 = mock(Path.class);
+        when(path2.toString()).thenReturn("amount");
+        when(violation2.getPropertyPath()).thenReturn(path2);
+        when(violation2.getMessage()).thenReturn(null); // triggers default message logic
+
+        when(ex.getConstraintViolations()).thenReturn(Set.of(violation1, violation2));
+        when(ex.getMessage()).thenReturn("Validation failed");
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleConstraintViolationException(ex, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("1001", response.getBody().result().responseCode());
+        
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        assertNotNull(details);
+        assertEquals(2, details.size());
+        
+        boolean foundEmail = false;
+        boolean foundAmount = false;
+        for (ValidationError err : details) {
+            if ("email".equals(err.field())) {
+                foundEmail = true;
+                assertEquals("must be a well-formed email address", err.message());
+            } else if ("amount".equals(err.field())) {
+                foundAmount = true;
+                assertEquals("Invalid value", err.message());
+            }
+        }
+        assertTrue(foundEmail);
+        assertTrue(foundAmount);
     }
 
     @Test
