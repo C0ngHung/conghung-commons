@@ -6,25 +6,25 @@ import vn.conghung.common.exception.ResponseCode;
 import java.time.Instant;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record ApiResult<T>(String code, String message, T data, ErrorDetail error, String traceId, Instant timestamp) {
+public record ApiResult<T>(ResultInfo result, T data, ErrorDetail error, Instant timestamp) {
 
-    public static <T> ApiResult<T> ok(T data, String traceId) {
-        return ok(ResponseCode.COMMON_SUCCESS.defaultMessage(), data, traceId);
+    public static <T> ApiResult<T> ok(T data) {
+        return new ApiResult<>(ResultInfo.of(ResponseCode.COMMON_SUCCESS), data, null, Instant.now());
     }
 
-    public static <T> ApiResult<T> ok(String message, T data, String traceId) {
-        return new ApiResult<>(ResponseCode.COMMON_SUCCESS.code(), message, data, null, traceId, Instant.now());
+    public static <T> ApiResult<T> ok(String description, T data) {
+        return new ApiResult<>(ResultInfo.of(ResponseCode.COMMON_SUCCESS, description), data, null, Instant.now());
     }
 
-    public static <T> ApiResult<T> fail(ResponseCode responseCode, String traceId) {
-        return new ApiResult<>(responseCode.code(), responseCode.defaultMessage(), null, ErrorDetail.of(responseCode), traceId, Instant.now());
+    public static <T> ApiResult<T> fail(ResponseCode responseCode) {
+        return new ApiResult<>(ResultInfo.of(responseCode), null, null, Instant.now());
     }
 
-    public static <T> ApiResult<T> fail(ResponseCode responseCode, String message, String traceId) {
-        return new ApiResult<>(responseCode.code(), message, null, ErrorDetail.of(responseCode, message), traceId, Instant.now());
+    public static <T> ApiResult<T> fail(ResponseCode responseCode, String description) {
+        return new ApiResult<>(ResultInfo.of(responseCode, description), null, null, Instant.now());
     }
 
-    public static <T> ApiResult<T> fail(ResponseCode responseCode, String message, Object details, String traceId) {
-        return new ApiResult<>(responseCode.code(), message, null, ErrorDetail.of(responseCode, details), traceId, Instant.now());
+    public static <T> ApiResult<T> fail(ResponseCode responseCode, String description, Object details) {
+        return new ApiResult<>(ResultInfo.of(responseCode, description), null, ErrorDetail.of(details), Instant.now());
     }
 }

@@ -1,0 +1,13 @@
+{
+  "requestId": "123e4567-e89b-12d3-a456-426614174000",
+  "requestDateTime": "2025-06-22T15:49:00.000+07:00",
+  "channel": "ORM",
+  "result": {
+    "responseCode": "0000",
+    "description": "SUCCESS"
+  },
+  "data": {
+    "referenceNo": "REF123456789012345678901234567890123",
+    "status": "PROCESSING"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "requestId": "2cBc2a0E-Cd57-d7cF-e3Ea-9eC15FC6F60D",
+  "requestDateTime": "2025-06-22T15:17:00.123+07:00",
+  "channel": "ORM",
+  "data": {
+    "creator": "Test creator",
+    "cifNo": "1999500",
+    "transaction": {
+      "referenceNo": "KITTEST026313",
+      "sender": {
+        "name": "Test Sender",
+        "sourceNo": "5174160007290936"
+      },
+      "beneficiary": {
+        "name": "Test Beneficiary",
+        "destinationNo": "5557151387971366"
+      },
+      "amount": "100000",
+      "currency": "VND",
+      "remark": "Chuyen tien internal A2A",
+      "periodicTransfers": {
+        "activeStartDate": "2026-10-07",
+        "activeStartTime": "083000"
+      }
+    }
+  }
+}

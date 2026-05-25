@@ -12,8 +12,9 @@ Lightweight shared infrastructure kernel for Spring Boot web applications.
 
 | Package | Class | Purpose |
 |---------|-------|---------|
-| `api` | `ApiResult<T>` | Unified API response wrapper with `code`, `message`, `data`, `error`, `traceId`, `timestamp` |
-| `api` | `ErrorDetail` | Structured error detail with `code`, `message`, `details` |
+| `api` | `ApiResult<T>` | Unified API response envelope with nested `result` (responseCode + description), payload `data`, `error` object and `timestamp` |
+| `api` | `ResultInfo` | Nested status carrier holding `responseCode` and `description` |
+| `api` | `ErrorDetail` | Structured validation error details holding field-level violations (`details` Map) |
 | `exception` | `ResponseCode` | Stable numeric error code enum for generic infrastructure concerns |
 | `exception` | `ApiException` | Abstract base exception with `ResponseCode` + `HttpStatus` |
 | `exception` | `BusinessException` | Domain/business rule violation (HTTP 422) |
@@ -109,10 +110,9 @@ For developers consuming this library, it is vital to understand the difference 
 This library is designed for instant plug-and-play integration. Here is how to leverage its core capabilities in your microservices:
 
 ### 1. Centralized API Response Envelope (`ApiResult`)
-Return `ApiResult<T>` as your controller response. The `traceId` is automatically placed in MDC by `TraceIdFilter`, so retrieve it via `MDC.get("traceId")`:
+Return `ApiResult<T>` as your controller response. The `traceId` is intentionally excluded from the response body to hide internal implementation details (it is synchronized with MDC and printed to internal logs, and passed back via the `X-Trace-Id` header):
 
 ```java
-import org.slf4j.MDC;
 import vn.conghung.common.api.ApiResult;
 
 @RestController
@@ -122,17 +122,63 @@ public class UserController {
     @GetMapping("/{id}")
     public ApiResult<UserResponse> getUser(@PathVariable Long id) {
         UserResponse user = userService.findById(id);
-        // ApiResult.ok(data, traceId) → HTTP 200, code "0000"
-        return ApiResult.ok(user, MDC.get("traceId"));
+        // ApiResult.ok(data) → HTTP 200, code "0000" (result is fully automated, no traceId pollution)
+        return ApiResult.ok(user);
     }
 
     @PostMapping
     public ApiResult<UserResponse> createUser(@RequestBody @Valid CreateUserRequest req) {
         UserResponse created = userService.create(req);
-        return ApiResult.ok("User created successfully", created, MDC.get("traceId"));
+        return ApiResult.ok("User created successfully", created);
     }
 }
 ```
+
+### API Response Formats
+
+#### Success Response Envelope
+```json
+{
+  "result": {
+    "responseCode": "0000",
+    "description": "Success"
+  },
+  "data": {
+    "userId": 123,
+    "email": "user@example.com"
+  },
+  "timestamp": "2026-05-25T13:49:00Z"
+}
+```
+
+#### Simple Business Error Response (No Details)
+```json
+{
+  "result": {
+    "responseCode": "4001",
+    "description": "Resource not found"
+  },
+  "timestamp": "2026-05-25T13:49:00Z"
+}
+```
+
+#### Validation Error Response (Structured details map)
+```json
+{
+  "result": {
+    "responseCode": "1001",
+    "description": "Invalid input data"
+  },
+  "error": {
+    "details": {
+      "amount": "must not be null",
+      "currency": "must not be blank"
+    }
+  },
+  "timestamp": "2026-05-25T13:49:00Z"
+}
+```
+
 
 ### 2. Robust Exception Throwing & Centralized Handling
 Throw appropriate subclasses of `ApiException`. The included `GlobalExceptionHandler` (`@RestControllerAdvice`) automatically intercepts these, maps them to corresponding HTTP statuses, and logs them at correct severity levels without leaking system details:
