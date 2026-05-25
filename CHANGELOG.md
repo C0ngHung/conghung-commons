@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7](https://github.com/C0ngHung/conghung-commons/compare/v0.2.6...v0.2.7) (2026-05-25)
+
+
+### Bug Fixes
+
+* **api:** change timestamp to requestDateTime with OffsetDateTime timezone for PROJ-5 ([#24](https://github.com/C0ngHung/conghung-commons/issues/24)) ([d97e35c](https://github.com/C0ngHung/conghung-commons/commit/d97e35c31d86af32da254a56d913917e5112d5ac))
+
 ## [0.2.6](https://github.com/C0ngHung/conghung-commons/compare/v0.2.5...v0.2.6) (2026-05-23)
 
 
