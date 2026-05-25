@@ -3,29 +3,39 @@ package vn.conghung.common.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import vn.conghung.common.api.ApiResult;
 
-import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    private static final String TRACE_ID_KEY = "traceId";
+    @ExceptionHandler(TechnicalException.class)
+    public ResponseEntity<ApiResult<Void>> handleTechnicalException(ApiException ex, HttpServletRequest request) {
 
-    @ExceptionHandler({TechnicalException.class, IntegrationException.class})
-    public ResponseEntity<ApiResult<Void>> handleInfrastructureException(ApiException ex, HttpServletRequest request) {
+        if (log.isErrorEnabled()) {log.error("Technical failure at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()), ex);
+        }
+
+        return createErrorResponse(ex.responseCode(), ex.userMessage(), ex.httpStatus());
+    }
+
+    @ExceptionHandler(IntegrationException.class)
+    public ResponseEntity<ApiResult<Void>> handleIntegrationException(IntegrationException ex, HttpServletRequest request) {
 
         if (log.isErrorEnabled()) {
-            log.error("Infrastructure/Integration failure at {}: {}",
+            log.error("External integration failure at {}: extRef={}, corrId={}, message={}",
                     sanitize(request.getRequestURI()),
+                    sanitize(ex.externalReference()),
+                    sanitize(ex.correlationId()),
                     sanitize(ex.getMessage()),
                     ex);
         }
@@ -69,12 +79,15 @@ public class GlobalExceptionHandler {
                     sanitize(ex.getMessage()));
         }
 
-        List<String> errors = ex.getBindingResult().getFieldErrors().stream()
-                .map(err -> err.getField() + " " + err.getDefaultMessage())
-                .toList();
+
+        Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.toMap(FieldError::getField,
+                        err -> err.getDefaultMessage() != null ? err.getDefaultMessage() : "Invalid value",
+                        (existing, duplicate) -> existing
+                ));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResult.fail(ResponseCode.REQ_VALIDATION_ERROR, ResponseCode.REQ_VALIDATION_ERROR.defaultMessage(), errors, getTraceId()));
+                .body(ApiResult.fail(ResponseCode.REQ_VALIDATION_ERROR, ResponseCode.REQ_VALIDATION_ERROR.defaultMessage(), fieldErrors));
     }
 
     @ExceptionHandler(Exception.class)
@@ -92,11 +105,7 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ApiResult<Void>> createErrorResponse(ResponseCode code, String message, HttpStatus status) {
 
-        return ResponseEntity.status(status).body(ApiResult.fail(code, message, getTraceId()));
-    }
-
-    private String getTraceId() {
-        return MDC.get(TRACE_ID_KEY) != null ? MDC.get(TRACE_ID_KEY) : "unknown";
+        return ResponseEntity.status(status).body(ApiResult.fail(code, message));
     }
 
     private String sanitize(String input) {
