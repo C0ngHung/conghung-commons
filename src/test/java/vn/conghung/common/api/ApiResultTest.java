@@ -15,7 +15,7 @@ class ApiResultTest {
         assertEquals("Success", result.result().description());
         assertEquals("test-data", result.data());
         assertNull(result.error());
-        assertNotNull(result.timestamp());
+        assertNotNull(result.requestDateTime());
     }
 
     @Test
