@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9](https://github.com/C0ngHung/conghung-commons/compare/v0.2.8...v0.2.9) (2026-05-25)
+
+
+### Features
+
+* **exception:** add standardized spring mvc exception handlers for PROJ-6 ([#30](https://github.com/C0ngHung/conghung-commons/issues/30)) ([a0ad2f9](https://github.com/C0ngHung/conghung-commons/commit/a0ad2f94aa92f932b2fc5c7205b2970f63947ad8))
+
 ## [0.2.8](https://github.com/C0ngHung/conghung-commons/compare/v0.2.7...v0.2.8) (2026-05-25)
 
 
