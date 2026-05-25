@@ -13,7 +13,6 @@ import vn.conghung.common.api.ApiResult;
 import vn.conghung.common.api.ValidationError;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -24,6 +23,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> handleTechnicalException(ApiException ex, HttpServletRequest request) {
 
         if (log.isErrorEnabled()) {log.error("Technical failure at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()), ex);
+
         }
 
         return createErrorResponse(ex.responseCode(), ex.userMessage(), ex.httpStatus());
@@ -48,6 +48,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> handleUnknownResultException(UnknownResultException ex, HttpServletRequest request) {
 
         if (log.isErrorEnabled()) {
+
             log.error("Unknown transaction result at {}: txRef={}, extRef={}, corrId={}",
                     sanitize(request.getRequestURI()),
                     sanitize(ex.transactionReference()),
@@ -63,9 +64,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> handleApiException(ApiException ex, HttpServletRequest request) {
 
         if (log.isWarnEnabled()) {
-            log.warn("Business exception at {}: {}",
-                    sanitize(request.getRequestURI()),
-                    sanitize(ex.getMessage()));
+
+            log.warn("Business exception at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()));
         }
 
         return createErrorResponse(ex.responseCode(), ex.userMessage(), ex.httpStatus());
@@ -75,18 +75,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
 
         if (log.isWarnEnabled()) {
-            log.warn("Validation error at {}: {}",
-                    sanitize(request.getRequestURI()),
-                    sanitize(ex.getMessage()));
+
+            log.warn("Validation error at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()));
         }
 
-
         List<ValidationError> validationErrors = ex.getBindingResult().getFieldErrors().stream()
-                .map(err -> new ValidationError(
-                        err.getField(),
-                        err.getDefaultMessage() != null ? err.getDefaultMessage() : "Invalid value"
-                ))
-                .collect(Collectors.toList());
+                .map(err -> new ValidationError(err.getField(), err.getDefaultMessage() != null ? err.getDefaultMessage() : "Invalid value"))
+                .toList();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResult.fail(ResponseCode.REQ_VALIDATION_ERROR, ResponseCode.REQ_VALIDATION_ERROR.defaultMessage(), validationErrors));
@@ -95,11 +90,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResult<Void>> handleGenericException(Exception ex, HttpServletRequest request) {
 
-        if (log.isErrorEnabled()) {
-            log.error("Unhandled exception at {}: {}",
-                    sanitize(request.getRequestURI()),
-                    sanitize(ex.getMessage()),
-                    ex);
+        if (log.isErrorEnabled()) {log.error("Unhandled exception at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()), ex);
+            
         }
 
         return createErrorResponse(ResponseCode.SYS_INTERNAL_ERROR, ResponseCode.SYS_INTERNAL_ERROR.defaultMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
