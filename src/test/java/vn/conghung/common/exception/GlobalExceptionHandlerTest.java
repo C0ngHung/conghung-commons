@@ -9,9 +9,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import vn.conghung.common.api.ApiResult;
+import vn.conghung.common.api.ValidationError;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -117,11 +117,12 @@ class GlobalExceptionHandlerTest {
         assertEquals("1001", response.getBody().result().responseCode());
         
         assertNotNull(response.getBody().error());
-        Map<String, String> details = (Map<String, String>) response.getBody().error().details();
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
         assertNotNull(details);
-        assertEquals("must not be null", details.get("amount"));
-        assertEquals("must not be blank", details.get("currency"));
-        assertEquals("Invalid value", details.get("email"));
+        assertEquals(3, details.size());
+        assertTrue(details.contains(new ValidationError("amount", "must not be null")));
+        assertTrue(details.contains(new ValidationError("currency", "must not be blank")));
+        assertTrue(details.contains(new ValidationError("email", "Invalid value")));
     }
 
     @Test
