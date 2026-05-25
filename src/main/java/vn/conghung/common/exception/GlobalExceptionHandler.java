@@ -10,8 +10,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import vn.conghung.common.api.ApiResult;
+import vn.conghung.common.api.ValidationError;
 
-import java.util.Map;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -80,14 +81,15 @@ public class GlobalExceptionHandler {
         }
 
 
-        Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-                .collect(Collectors.toMap(FieldError::getField,
-                        err -> err.getDefaultMessage() != null ? err.getDefaultMessage() : "Invalid value",
-                        (existing, duplicate) -> existing
-                ));
+        List<ValidationError> validationErrors = ex.getBindingResult().getFieldErrors().stream()
+                .map(err -> new ValidationError(
+                        err.getField(),
+                        err.getDefaultMessage() != null ? err.getDefaultMessage() : "Invalid value"
+                ))
+                .collect(Collectors.toList());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResult.fail(ResponseCode.REQ_VALIDATION_ERROR, ResponseCode.REQ_VALIDATION_ERROR.defaultMessage(), fieldErrors));
+                .body(ApiResult.fail(ResponseCode.REQ_VALIDATION_ERROR, ResponseCode.REQ_VALIDATION_ERROR.defaultMessage(), validationErrors));
     }
 
     @ExceptionHandler(Exception.class)
