@@ -148,7 +148,7 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, responseNullCause.getStatusCode());
         assertEquals("1002", responseNullCause.getBody().result().responseCode());
         List<ValidationError> detailsNull = (List<ValidationError>) responseNullCause.getBody().error().details();
-        assertEquals("Malformed JSON request or invalid fields format", detailsNull.get(0).message());
+        assertEquals("Required request body is missing or malformed", detailsNull.get(0).message());
 
         // Test with specific cause containing colon
         Throwable causeWithColon = new RuntimeException("JSON parsing failed: Cannot deserialize value of type java.lang.Integer from String");
@@ -165,6 +165,45 @@ class GlobalExceptionHandlerTest {
         assertNotNull(responseWithoutColon);
         List<ValidationError> detailsWithoutColon = (List<ValidationError>) responseWithoutColon.getBody().error().details();
         assertEquals("Malformed UTF-8 characters", detailsWithoutColon.get(0).message());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleHttpMessageNotReadableException_MissingBody() {
+        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
+        when(ex.getMessage()).thenReturn("Required request body is missing: public void createUser(UserDto)");
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+        assertNotNull(response);
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        assertEquals("requestBody", details.get(0).field());
+        assertEquals("Required request body is missing", details.get(0).message());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleHttpMessageNotReadableException_JacksonFieldExtraction() {
+        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
+        when(ex.getMessage()).thenReturn("Cannot deserialize value of type 'java.lang.Integer' from String \"abc\": not a valid Integer value through reference chain: vn.conghung.dto.UserDto[\"age\"]");
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+        assertNotNull(response);
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        assertEquals("age", details.get(0).field());
+        assertEquals("Invalid value 'abc' for type Integer", details.get(0).message());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleHttpMessageNotReadableException_JacksonRedactedSensitiveDetails() {
+        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
+        when(ex.getMessage()).thenReturn("StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION internal class path leaks vn.conghung.dto.UserDto[\"email\"]");
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+        assertNotNull(response);
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        assertEquals("requestBody", details.get(0).field());
+        assertEquals("Malformed JSON request body", details.get(0).message());
     }
 
     @Test

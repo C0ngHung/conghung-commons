@@ -94,25 +94,116 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResult<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex, HttpServletRequest request) {
 
         if (log.isWarnEnabled()) {
-
             log.warn("Unreadable HTTP message at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()));
         }
 
-        String detailMessage = "Malformed JSON request or invalid fields format";
+        String msg = ex.getMessage();
 
-        String msg = ex.getMostSpecificCause().getMessage();
+        String fieldName = "requestBody";
 
-        if (msg != null && msg.contains(":")) {
+        if (msg != null && msg.contains("through reference chain:")) {
 
-            detailMessage = msg.substring(msg.indexOf(":") + 1).trim();
+            int start = msg.lastIndexOf("[\"");
 
-        } else if (msg != null) {
+            int end = msg.lastIndexOf("\"]");
 
-            detailMessage = msg;
+            if (start != -1 && end != -1 && start + 2 < end) {
+                fieldName = msg.substring(start + 2, end);
+            }
         }
-        List<ValidationError> validationErrors = List.of(new ValidationError("requestBody", detailMessage));
+
+        String detailMessage = resolveDetailMessage(ex);
+
+        List<ValidationError> validationErrors = List.of(new ValidationError(fieldName, detailMessage));
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResult.fail(ResponseCode.REQ_BAD_REQUEST, ResponseCode.REQ_BAD_REQUEST.defaultMessage(), validationErrors));
+    }
+
+    private String resolveDetailMessage(HttpMessageNotReadableException ex) {
+
+        String msg = ex.getMessage();
+
+        if (msg == null) {
+            return "Required request body is missing or malformed";
+        }
+
+        if (msg.contains("Required request body is missing")) {
+            return "Required request body is missing";
+        }
+
+        if (msg.contains("Cannot deserialize value of type")) {
+            return parseMismatchedInput(msg);
+        }
+
+        if (msg.contains("REDACTED") || msg.contains("StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION")) {
+            return "Malformed JSON request body";
+        }
+
+        String mostSpecific = ex.getMostSpecificCause().getMessage();
+
+        if (mostSpecific == null) {
+            return "Required request body is missing or malformed";
+        }
+
+        String parsedMessage = mostSpecific.contains(":") 
+                ? mostSpecific.substring(mostSpecific.indexOf(":") + 1).trim() 
+                : mostSpecific;
+
+        if (parsedMessage.contains("REDACTED") || parsedMessage.contains("StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION")) {
+            return "Malformed JSON request body";
+        }
+
+        return parsedMessage;
+    }
+
+    private String parseMismatchedInput(String msg) {
+
+        String type = "";
+
+        int typeStart = msg.indexOf("type '");
+
+        int typeEnd = msg.indexOf("'", typeStart + 6);
+
+        if (typeStart != -1 && typeEnd != -1) {
+
+            String fullType = msg.substring(typeStart + 6, typeEnd);
+
+            type = fullType.substring(fullType.lastIndexOf('.') + 1);
+        }
+
+        String val = extractValueFromString(msg, "from String \"", "\"");
+
+        if (val.isEmpty()) {
+            val = extractValueFromString(msg, "from String '", "'");
+        }
+
+        if (!type.isEmpty() && !val.isEmpty()) {
+            return "Invalid value '" + val + "' for type " + type;
+        }
+
+        if (!type.isEmpty()) {
+            return "Invalid format for type " + type;
+        }
+
+        return "Invalid value format";
+    }
+
+    private String extractValueFromString(String msg, String prefix, String suffix) {
+
+        if (!msg.contains(prefix)) {
+            return "";
+        }
+
+        int start = msg.indexOf(prefix);
+
+        int end = msg.indexOf(suffix, start + prefix.length());
+
+        if (start != -1 && end != -1) {
+            return msg.substring(start + prefix.length(), end);
+        }
+        
+        return "";
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
