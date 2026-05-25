@@ -207,6 +207,126 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void testHandleHttpMessageNotReadableException_NullMessage() {
+        // Covers: resolveDetailMessage -> msg == null branch
+        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
+        when(ex.getMessage()).thenReturn(null);
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        assertEquals("requestBody", details.get(0).field());
+        assertEquals("Required request body is missing or malformed", details.get(0).message());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleHttpMessageNotReadableException_NoReferenceChainQuotes() {
+        // Covers: 'through reference chain:' present but quotes/brackets malformed -> fieldName stays "requestBody"
+        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
+        when(ex.getMessage()).thenReturn("Cannot deserialize value of type 'java.lang.Integer' from String \"abc\": not a valid Integer value through reference chain: vn.conghung.dto.UserDto[age]");
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+
+        assertNotNull(response);
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        // field remains "requestBody" because the ["..."] pattern is absent
+        assertEquals("requestBody", details.get(0).field());
+        assertEquals("Invalid value 'abc' for type Integer", details.get(0).message());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleHttpMessageNotReadableException_MostSpecificCauseRedacted() {
+        // Covers: msg is clean, but mostSpecificCause contains sensitive StreamReadFeature -> REDACTED branch in resolveDetailMessage
+        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
+        when(ex.getMessage()).thenReturn("Some generic parse error");
+        Throwable sensitiveCause = new RuntimeException("StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION internal classpath leak");
+        when(ex.getMostSpecificCause()).thenReturn(sensitiveCause);
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+
+        assertNotNull(response);
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        assertEquals("Malformed JSON request body", details.get(0).message());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleHttpMessageNotReadableException_MismatchedValueSingleQuotes() {
+        // Covers: parseMismatchedInput -> extractValueFromString with single-quote fallback branch
+        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
+        when(ex.getMessage()).thenReturn("Cannot deserialize value of type 'java.lang.Long' from String 'xyz': not a valid Long value");
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+
+        assertNotNull(response);
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        assertEquals("Invalid value 'xyz' for type Long", details.get(0).message());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleHttpMessageNotReadableException_MismatchedMissingType() {
+        // Covers: parseMismatchedInput -> both type and val empty -> "Invalid value format"
+        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
+        when(ex.getMessage()).thenReturn("Cannot deserialize value of type `SomeType` unexpected token");
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+
+        assertNotNull(response);
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        assertEquals("Invalid value format", details.get(0).message());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleHttpMessageNotReadableException_MismatchedTypeOnlyNoValue() {
+        // Covers: parseMismatchedInput -> type found but val empty -> "Invalid format for type X"
+        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
+        // Has type 'java.lang.Boolean' but no recognizable from String "..." or '...' pattern
+        when(ex.getMessage()).thenReturn("Cannot deserialize value of type 'java.lang.Boolean' from token VALUE_NULL");
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+
+        assertNotNull(response);
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        assertEquals("Invalid format for type Boolean", details.get(0).message());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHandleHttpMessageNotReadableException_ExtractValueMissingSuffix() {
+        // Covers: extractValueFromString -> prefix found but suffix not found -> returns ""
+        // Message has from String " but missing the closing " -> triggers fallback to single-quote path, also fails -> "Invalid format for type"
+        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
+        when(ex.getMessage()).thenReturn("Cannot deserialize value of type 'java.lang.Integer' from String \"unclosed");
+
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
+
+        assertNotNull(response);
+        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
+        assertEquals("Invalid format for type Integer", details.get(0).message());
+    }
+
+    @Test
+    void testSanitizeWithNewlineAndCarriageReturn() {
+        // Covers: sanitize() -> replaces '\n' and '\r' with '_'
+        // We inject newline characters in both request URI and exception message to trigger the replace branches
+        HttpServletRequest maliciousRequest = mock(HttpServletRequest.class);
+        when(maliciousRequest.getRequestURI()).thenReturn("/api/test\ninjected");
+
+        Exception ex = new RuntimeException("Error message\rwith\ncontrol chars");
+        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleGenericException(ex, maliciousRequest);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    }
+
+    @Test
     void testHandleHttpRequestMethodNotSupportedException() {
         HttpRequestMethodNotSupportedException ex = mock(HttpRequestMethodNotSupportedException.class);
         when(ex.getMethod()).thenReturn("GET");
