@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.11](https://github.com/C0ngHung/conghung-commons/compare/v0.2.10...v0.2.11) (2026-06-08)
+
+
+### Features
+
+* **api:** add PageResponse record and deprecate TraceIdFilter ([#37](https://github.com/C0ngHung/conghung-commons/issues/37)) ([2697b4d](https://github.com/C0ngHung/conghung-commons/commit/2697b4d19fb1df0236f0cbec576d4180374d22a7))
+
 ## [0.2.10](https://github.com/C0ngHung/conghung-commons/compare/v0.2.9...v0.2.10) (2026-05-25)
 
 
