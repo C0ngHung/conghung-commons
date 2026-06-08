@@ -13,6 +13,7 @@ Lightweight shared infrastructure kernel for Spring Boot web applications.
 | Package | Class | Purpose |
 |---------|-------|---------|
 | `api` | `ApiResult<T>` | Unified API response envelope with nested `result` (responseCode + description), payload `data`, `error` object and `timestamp` |
+| `api` | `PageResponse<T>` | Immutable paginated response envelope (1-based page index, null-safe items, Spring Data `Page` factory) |
 | `api` | `ResultInfo` | Nested status carrier holding `responseCode` and `description` |
 | `api` | `ErrorDetail` | Structured validation error details holding field-level violations (`details` Map) |
 | `exception` | `ResponseCode` | Stable numeric error code enum for generic infrastructure concerns |
@@ -23,7 +24,7 @@ Lightweight shared infrastructure kernel for Spring Boot web applications.
 | `exception` | `UnknownResultException` | Timeout/unknown transaction result (HTTP 202) |
 | `exception` | `ResourceNotFoundException` | Resource not found (HTTP 404) |
 | `exception` | `GlobalExceptionHandler` | Centralized `@RestControllerAdvice` with proper log levels |
-| `web` | `TraceIdFilter` | SLF4J MDC-based `traceId` propagation via `X-Trace-Id` header |
+| `web` | `TraceIdFilter` | **(Deprecated since 0.2.10)** Pass-through filter kept temporarily to avoid breaking changes |
 
 ## Error Code Ranges
 
@@ -209,24 +210,62 @@ try {
 }
 ```
 
-### 3. End-to-End Log Traceability (MDC Synchronization)
-The `TraceIdFilter` (auto-registered as a `@Component`) automatically:
-1. Extracts the `X-Trace-Id` header from incoming requests (or generates a UUID if absent).
-2. Sanitizes the value to prevent log injection attacks.
-3. Places it in SLF4J MDC under key `traceId`.
-4. Sets the `X-Trace-Id` response header for downstream callers.
+### 3. Standardized Paginated Response (`PageResponse`)
 
-To print `traceId` in your application logs, add to `application.properties`:
+Use `PageResponse<T>` as the return type for all list/search endpoints. It enforces a consistent, client-friendly structure with 1-based page numbering and a null-safe `items` list.
 
-```properties
-# Standard pattern including application name and traceId
-logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} %5p [${spring.application.name:},%X{traceId:-}] --- %logger{36} : %msg%n
+**In your service layer** — use the static factory to eliminate boilerplate `toPageResponse()` helpers:
+
+```java
+import vn.conghung.common.api.PageResponse;
+
+@Override
+@Transactional(readOnly = true)
+public PageResponse<UserResponseDto> findAll(int page, int size) {
+    // 1-based page from client → 0-based for Spring Data
+    Pageable pageable = PageRequest.of(page - 1, size);
+    Page<User> userPage = userRepository.findAll(pageable);
+
+    // Factory method maps entity → DTO and builds PageResponse in one step
+    return PageResponse.of(page, userPage, userMapper::toDto);
+}
 ```
 
-Expected log output:
-```text
-2026-05-22 14:30:00  INFO [user-service,a1b2c3d4-e5f6-7890] --- UserController : Fetching user with id 123
+**In your controller** — wrap inside `ApiResult.ok()` for a consistent envelope:
+
+```java
+@GetMapping
+public ApiResult<PageResponse<UserResponseDto>> getUsers(
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "20") int size) {
+    return ApiResult.ok(userService.findAll(page, size));
+}
 ```
+
+**JSON response format:**
+
+```json
+{
+  "result": { "responseCode": "0000", "description": "Success" },
+  "data": {
+    "pageNo": 1,
+    "pageSize": 20,
+    "totalPages": 5,
+    "totalElements": 98,
+    "items": [
+      { "userId": 1, "email": "alice@example.com" },
+      { "userId": 2, "email": "bob@example.com" }
+    ]
+  },
+  "requestDateTime": "2026-06-08T12:00:00+07:00"
+}
+```
+
+### 4. End-to-End Log Traceability (Deprecated)
+
+> [!WARNING]
+> **Deprecated since v0.2.10**: `TraceIdFilter` is now deprecated and is kept only as a pass-through filter to avoid compilation/runtime failures in downstream microservices. It no longer extracts headers, generates UUIDs, or writes to MDC. Trace propagation should be handled via modern distributed tracing tools like Spring Cloud Sleuth or Micrometer.
+
 
 ## Design Principles
 
