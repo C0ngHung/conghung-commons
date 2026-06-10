@@ -67,7 +67,7 @@ Add the dependency:
 <dependency>
     <groupId>vn.conghung</groupId>
     <artifactId>conghung-commons</artifactId>
-    <version>0.2.4</version>
+    <version>0.2.12</version>
 </dependency>
 ```
 
@@ -132,8 +132,25 @@ public class UserController {
         UserResponse created = userService.create(req);
         return ApiResult.ok("User created successfully", created);
     }
+
+    // Void operations (delete, soft-delete, logout) — no data to return
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResult<Void>> deleteUser(@PathVariable Long id) {
+        userService.delete(id);
+        return ResponseEntity.ok(ApiResult.ok());                              // no message
+    }
+
+    @PatchMapping("/{id}/deactivate")
+    public ResponseEntity<ApiResult<Void>> deactivateUser(@PathVariable Long id) {
+        userService.deactivate(id);
+        return ResponseEntity.ok(ApiResult.noData("User deactivated successfully")); // with message
+    }
 }
 ```
+
+> **Design note:** This library uses `200 OK + ApiResult<Void>` for void operations rather than `204 No Content`.
+> HTTP 204 prohibits a body (RFC 9110 §15.3.5) — combining it with an `ApiResult` wrapper is a contradiction.
+> For internal microservices, uniform response parsing (`200` everywhere) takes priority over strict HTTP semantics.
 
 ### API Response Formats
 
