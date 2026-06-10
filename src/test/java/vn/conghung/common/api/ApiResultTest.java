@@ -76,4 +76,62 @@ class ApiResultTest {
         ErrorDetail error = ErrorDetail.of("detail-object");
         assertEquals("detail-object", error.details());
     }
+
+    // ── PROPOSAL-001: ApiResult.ok() no-arg ─────────────────────────────────
+
+    @Test
+    void ok_noArg_shouldReturnSuccessCode() {
+        ApiResult<Void> result = ApiResult.ok();
+        assertNotNull(result);
+        assertEquals("0000", result.result().responseCode());
+    }
+
+    @Test
+    void ok_noArg_shouldUseDefaultDescription() {
+        ApiResult<Void> result = ApiResult.ok();
+        assertEquals("Success", result.result().description());
+    }
+
+    @Test
+    void ok_noArg_shouldReturnNullDataAndNullError() {
+        ApiResult<Void> result = ApiResult.ok();
+        assertNull(result.data());
+        assertNull(result.error());
+    }
+
+    @Test
+    void ok_noArg_shouldSetRequestDateTime() {
+        ApiResult<Void> result = ApiResult.ok();
+        assertNotNull(result.requestDateTime());
+    }
+
+    // ── PROPOSAL-003: ApiResult.noData(String) ───────────────────────────────
+
+    @Test
+    void noData_withDescription_shouldSetCustomDescription() {
+        ApiResult<Void> result = ApiResult.noData("User deleted successfully");
+        assertEquals("0000", result.result().responseCode());
+        assertEquals("User deleted successfully", result.result().description());
+    }
+
+    @Test
+    void noData_withDescription_shouldReturnNullDataAndNullError() {
+        ApiResult<Void> result = ApiResult.noData("User deleted successfully");
+        assertNull(result.data());
+        assertNull(result.error());
+    }
+
+    /**
+     * Critical backward-compatibility test: ApiResult.ok("string") must still resolve
+     * to ok(T data) with T=String, NOT to noData(String). This proves no compile-time
+     * ambiguity was introduced by naming the new method noData instead of ok(String).
+     */
+    @Test
+    void ok_withStringArgument_shouldResolveToOkTDataNotNoData() {
+        ApiResult<String> result = ApiResult.ok("someString");
+        // data must be "someString" — if it resolved to noData(), data would be null
+        assertEquals("someString", result.data());
+        assertNull(result.error());
+        assertEquals("0000", result.result().responseCode());
+    }
 }
