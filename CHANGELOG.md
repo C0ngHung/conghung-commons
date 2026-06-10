@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
+* **api:** add ApiResult.ok() and noData() factory methods for void operations [MICRO-002] ([#40](https://github.com/C0ngHung/conghung-commons/issues/40)) ([35f0857](https://github.com/C0ngHung/conghung-commons/commit/35f085730c9f9db7b7caeb0632b1c67d25f01b21))
+
+## [0.2.12](https://github.com/C0ngHung/conghung-commons/compare/v0.2.11...v0.2.12) (2026-06-10)
+
+
+### Features
+
 * **api:** add `ApiResult.ok()` no-arg factory method for void operations ([MICRO-002](https://github.com/C0ngHung/conghung-commons/issues/MICRO-002))
 * **api:** add `ApiResult.noData(String description)` factory method for void operations with custom message ([MICRO-002](https://github.com/C0ngHung/conghung-commons/issues/MICRO-002))
 
