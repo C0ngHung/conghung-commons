@@ -25,6 +25,8 @@ Lightweight shared infrastructure kernel for Spring Boot web applications.
 | `exception` | `ResourceNotFoundException` | Resource not found (HTTP 404) |
 | `exception` | `GlobalExceptionHandler` | Centralized `@RestControllerAdvice` with proper log levels |
 | `web` | `TraceIdFilter` | **(Deprecated since 0.2.10)** Pass-through filter kept temporarily to avoid breaking changes |
+| `util` | `SortParser` | Utility for parsing sorting query parameters (e.g. `field:dir`) with ASCII-safe, default fallback to `id:asc` |
+| `util` | `PageableFactory` | Utility for generating `Pageable` parameters from client query inputs (handling nulls and clamping size limits) |
 
 ## Error Code Ranges
 
@@ -278,7 +280,30 @@ public ApiResult<PageResponse<UserResponseDto>> getUsers(
 }
 ```
 
-### 4. End-to-End Log Traceability (Deprecated)
+### 4. Sorting & Pagination Query Parsing (`PageableFactory` / `SortParser`)
+
+When accepting page, size, and sorting specifications from client REST queries, use `PageableFactory` to securely parse and construct a Spring Data `Pageable` request. It automatically handles default fallbacks, null/empty parameters, and prevents DOS attacks by clamping the maximum allowed page size to `100`.
+
+**In your controller layer**:
+
+```java
+import vn.conghung.common.util.PageableFactory;
+import org.springframework.data.domain.Pageable;
+
+@GetMapping
+public ApiResult<PageResponse<UserResponseDto>> getUsers(
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(required = false) String sort) {
+    
+    // PageableFactory.of(...) parses "field:asc" or "field:desc" and clamps size limits
+    Pageable pageable = PageableFactory.of(page, size, sort);
+    
+    return ApiResult.ok(userService.findAll(pageable));
+}
+```
+
+### 5. End-to-End Log Traceability (Deprecated)
 
 > [!WARNING]
 > **Deprecated since v0.2.10**: `TraceIdFilter` is now deprecated and is kept only as a pass-through filter to avoid compilation/runtime failures in downstream microservices. It no longer extracts headers, generates UUIDs, or writes to MDC. Trace propagation should be handled via modern distributed tracing tools like Spring Cloud Sleuth or Micrometer.
