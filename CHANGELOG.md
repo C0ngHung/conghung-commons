@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/C0ngHung/conghung-commons/compare/v0.2.12...v0.3.0) (2026-06-15)
+
+
+### Features
+
+* **pagination-sort:** introduce SortParser and PageableFactory and bump target to 0.3.0 ([#43](https://github.com/C0ngHung/conghung-commons/issues/43)) ([de27c4f](https://github.com/C0ngHung/conghung-commons/commit/de27c4fb8ceba0829282c0d549940026c495c45f))
+
 ## [0.2.12](https://github.com/C0ngHung/conghung-commons/compare/v0.2.11...v0.2.12) (2026-06-10)
 
 
