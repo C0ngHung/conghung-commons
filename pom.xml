@@ -71,6 +71,14 @@
             <artifactId>spring-context</artifactId>
         </dependency>
 
+        <!-- Provides @AutoConfiguration so the library registers its beans (GlobalExceptionHandler)
+             regardless of the consumer's package root. Provided: the consumer's Spring Boot app supplies it. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
