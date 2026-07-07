@@ -5,7 +5,7 @@ import org.jspecify.annotations.Nullable;
 import vn.conghung.common.exception.ResponseCode;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 /**
  * Unified API response envelope.
@@ -14,12 +14,12 @@ import java.time.ZoneId;
  * @param result          status carrier (response code + description); always present
  * @param data            success payload; {@code null} for errors and void operations
  * @param error           structured error detail; {@code null} for success responses
- * @param requestDateTime response timestamp (UTC)
+ * @param requestDateTime response timestamp, stamped in UTC
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ApiResult<T>(ResultInfo result, @Nullable T data, @Nullable ErrorDetail error, OffsetDateTime requestDateTime) {
 
-    private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final ZoneOffset RESPONSE_ZONE = ZoneOffset.UTC;
 
     /**
      * Success response with data.
@@ -28,7 +28,7 @@ public record ApiResult<T>(ResultInfo result, @Nullable T data, @Nullable ErrorD
      * @return ApiResult with COMMON_SUCCESS code and the given data
      */
     public static <T> ApiResult<T> ok(T data) {
-        return new ApiResult<>(ResultInfo.of(ResponseCode.COMMON_SUCCESS), data, null, OffsetDateTime.now(ICT_ZONE));
+        return new ApiResult<>(ResultInfo.of(ResponseCode.COMMON_SUCCESS), data, null, OffsetDateTime.now(RESPONSE_ZONE));
     }
 
     /**
@@ -39,7 +39,7 @@ public record ApiResult<T>(ResultInfo result, @Nullable T data, @Nullable ErrorD
      * @return ApiResult with COMMON_SUCCESS code, custom description, and the given data
      */
     public static <T> ApiResult<T> ok(String description, T data) {
-        return new ApiResult<>(ResultInfo.of(ResponseCode.COMMON_SUCCESS, description), data, null, OffsetDateTime.now(ICT_ZONE));
+        return new ApiResult<>(ResultInfo.of(ResponseCode.COMMON_SUCCESS, description), data, null, OffsetDateTime.now(RESPONSE_ZONE));
     }
 
     /**
@@ -52,7 +52,7 @@ public record ApiResult<T>(ResultInfo result, @Nullable T data, @Nullable ErrorD
      * @return ApiResult with COMMON_SUCCESS code and null data
      */
     public static ApiResult<Void> ok() {
-        return new ApiResult<>(ResultInfo.of(ResponseCode.COMMON_SUCCESS), null, null, OffsetDateTime.now(ICT_ZONE));
+        return new ApiResult<>(ResultInfo.of(ResponseCode.COMMON_SUCCESS), null, null, OffsetDateTime.now(RESPONSE_ZONE));
     }
 
     /**
@@ -67,7 +67,7 @@ public record ApiResult<T>(ResultInfo result, @Nullable T data, @Nullable ErrorD
      * @return ApiResult with COMMON_SUCCESS code, custom description, and null data
      */
     public static ApiResult<Void> noData(String description) {
-        return new ApiResult<>(ResultInfo.of(ResponseCode.COMMON_SUCCESS, description), null, null, OffsetDateTime.now(ICT_ZONE));
+        return new ApiResult<>(ResultInfo.of(ResponseCode.COMMON_SUCCESS, description), null, null, OffsetDateTime.now(RESPONSE_ZONE));
     }
 
     /**
@@ -77,7 +77,7 @@ public record ApiResult<T>(ResultInfo result, @Nullable T data, @Nullable ErrorD
      * @return ApiResult with the given error code and null data
      */
     public static <T> ApiResult<T> fail(ResponseCode responseCode) {
-        return new ApiResult<>(ResultInfo.of(responseCode), null, null, OffsetDateTime.now(ICT_ZONE));
+        return new ApiResult<>(ResultInfo.of(responseCode), null, null, OffsetDateTime.now(RESPONSE_ZONE));
     }
 
     /**
@@ -88,7 +88,7 @@ public record ApiResult<T>(ResultInfo result, @Nullable T data, @Nullable ErrorD
      * @return ApiResult with the given error code and custom description
      */
     public static <T> ApiResult<T> fail(ResponseCode responseCode, String description) {
-        return new ApiResult<>(ResultInfo.of(responseCode, description), null, null, OffsetDateTime.now(ICT_ZONE));
+        return new ApiResult<>(ResultInfo.of(responseCode, description), null, null, OffsetDateTime.now(RESPONSE_ZONE));
     }
 
     /**
@@ -100,6 +100,6 @@ public record ApiResult<T>(ResultInfo result, @Nullable T data, @Nullable ErrorD
      * @return ApiResult with error code, description, and error detail object
      */
     public static <T> ApiResult<T> fail(ResponseCode responseCode, String description, Object details) {
-        return new ApiResult<>(ResultInfo.of(responseCode, description), null, ErrorDetail.of(details), OffsetDateTime.now(ICT_ZONE));
+        return new ApiResult<>(ResultInfo.of(responseCode, description), null, ErrorDetail.of(details), OffsetDateTime.now(RESPONSE_ZONE));
     }
 }
