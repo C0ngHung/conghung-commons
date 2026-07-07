@@ -1,0 +1,302 @@
+<style>
+  :root {
+    --paper:#f5f7f9; --surface:#ffffff; --surface-2:#eef1f4; --ink:#12181f; --ink-soft:#46525e;
+    --ink-faint:#6b7885; --line:#dde3e9; --line-strong:#c6ced7; --accent:#0d7d8f; --accent-soft:#0d7d8f18;
+    --crit:#cf3f43; --warn:#b0760f; --ok:#2b9066; --gov:#5560d6;
+    --crit-bg:#cf3f430f; --warn-bg:#b0760f0f; --ok-bg:#2b90660f; --gov-bg:#5560d60f;
+    --shadow:0 1px 2px rgba(16,24,32,.04),0 4px 16px rgba(16,24,32,.05);
+    --mono: ui-monospace,"SF Mono","SFMono-Regular","Cascadia Code","Roboto Mono",Menlo,Consolas,monospace;
+    --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:#0c1116; --surface:#131b22; --surface-2:#1b262f; --ink:#e6ecf1; --ink-soft:#a7b4c0;
+      --ink-faint:#78868f; --line:#26333d; --line-strong:#35454f; --accent:#2bb6c9; --accent-soft:#2bb6c920;
+      --crit:#f0676a; --warn:#e0a944; --ok:#4fc48f; --gov:#8b93f0;
+      --crit-bg:#f0676a14; --warn-bg:#e0a94414; --ok-bg:#4fc48f14; --gov-bg:#8b93f014;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --paper:#f5f7f9; --surface:#ffffff; --surface-2:#eef1f4; --ink:#12181f; --ink-soft:#46525e;
+    --ink-faint:#6b7885; --line:#dde3e9; --line-strong:#c6ced7; --accent:#0d7d8f; --accent-soft:#0d7d8f18;
+    --crit:#cf3f43; --warn:#b0760f; --ok:#2b9066; --gov:#5560d6;
+    --crit-bg:#cf3f430f; --warn-bg:#b0760f0f; --ok-bg:#2b90660f; --gov-bg:#5560d60f;
+    --shadow:0 1px 2px rgba(16,24,32,.04),0 4px 16px rgba(16,24,32,.05);
+  }
+  :root[data-theme="dark"] {
+    --paper:#0c1116; --surface:#131b22; --surface-2:#1b262f; --ink:#e6ecf1; --ink-soft:#a7b4c0;
+    --ink-faint:#78868f; --line:#26333d; --line-strong:#35454f; --accent:#2bb6c9; --accent-soft:#2bb6c920;
+    --crit:#f0676a; --warn:#e0a944; --ok:#4fc48f; --gov:#8b93f0;
+    --crit-bg:#f0676a14; --warn-bg:#e0a94414; --ok-bg:#4fc48f14; --gov-bg:#8b93f014;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 20px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:940px; margin:0 auto; padding:clamp(28px,5vw,64px) clamp(18px,4vw,40px) 96px; }
+
+  .eyebrow { font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin:0 0 14px; display:flex; align-items:center; gap:10px; }
+  .eyebrow::before { content:""; width:26px; height:2px; background:var(--accent); display:inline-block; }
+  h1 { font-size:clamp(30px,5.2vw,46px); line-height:1.06; letter-spacing:-.02em; margin:0 0 18px; text-wrap:balance; font-weight:780; }
+  h1 .mono-hl { font-family:var(--mono); font-weight:700; color:var(--accent); font-size:.82em; }
+  h2 { font-size:clamp(21px,3vw,27px); letter-spacing:-.015em; margin:0 0 6px; font-weight:720; text-wrap:balance; }
+  h3 { font-size:17px; margin:0; font-weight:680; letter-spacing:-.01em; }
+  p { margin:0 0 14px; color:var(--ink-soft); }
+  .lead { font-size:18px; color:var(--ink-soft); max-width:66ch; }
+  code { font-family:var(--mono); font-size:.84em; background:var(--surface-2); border:1px solid var(--line); padding:.08em .42em; border-radius:5px; color:var(--ink); white-space:nowrap; }
+  .file { font-family:var(--mono); font-size:.82em; background:var(--surface-2); border:1px solid var(--line); padding:.08em .42em; border-radius:5px; color:var(--ink); white-space:nowrap; }
+
+  .meta { display:flex; flex-wrap:wrap; gap:8px 26px; font-family:var(--mono); font-size:12.5px; color:var(--ink-faint); border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:14px 0; margin:26px 0 40px; }
+  .meta b { color:var(--ink-soft); font-weight:600; }
+
+  section { margin-top:54px; }
+  .sec-head { margin-bottom:22px; }
+  .sec-head .eyebrow { margin-bottom:10px; }
+
+  .verdict { display:grid; grid-template-columns:1fr auto; gap:26px; align-items:center; background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:14px; padding:26px 28px; box-shadow:var(--shadow); }
+  .verdict .v-label { font-family:var(--mono); font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; }
+  .verdict .v-title { font-size:20px; font-weight:720; color:var(--ink); letter-spacing:-.01em; line-height:1.25; margin:0; }
+  .target { text-align:center; font-family:var(--mono); background:var(--accent-soft); border:1px solid var(--accent); border-radius:12px; padding:14px 18px; min-width:132px; }
+  .target .g { font-size:26px; font-weight:700; color:var(--accent); line-height:1; letter-spacing:-.02em; }
+  .target .g small { font-size:15px; color:var(--ink-faint); }
+  .target .s { display:block; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-top:8px; }
+
+  .chips { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:26px; }
+  .chip { font-family:var(--mono); font-size:13px; font-weight:600; padding:7px 14px; border-radius:8px; display:flex; align-items:center; gap:8px; border:1px solid; }
+  .chip .n { font-size:15px; font-weight:700; }
+  .c-crit { color:var(--crit); background:var(--crit-bg); border-color:var(--crit); }
+  .c-warn { color:var(--warn); background:var(--warn-bg); border-color:var(--warn); }
+  .c-ok   { color:var(--ok);   background:var(--ok-bg);   border-color:var(--ok); }
+  .c-gov  { color:var(--gov);  background:var(--gov-bg);  border-color:var(--gov); }
+
+  .finding { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:14px; border-left:4px solid var(--line-strong); }
+  .finding.crit { border-left-color:var(--crit); }
+  .finding.warn { border-left-color:var(--warn); }
+  .finding.gov  { border-left-color:var(--gov); }
+  .f-top { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:4px; }
+  .f-tag { font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em; padding:3px 8px; border-radius:5px; text-transform:uppercase; }
+  .t-crit { color:var(--crit); background:var(--crit-bg); }
+  .t-warn { color:var(--warn); background:var(--warn-bg); }
+  .t-gov  { color:var(--gov);  background:var(--gov-bg); }
+  .finding h3 { flex:1; min-width:220px; }
+  .scope { font-family:var(--mono); font-size:10.5px; font-weight:700; letter-spacing:.05em; padding:3px 8px; border-radius:5px; text-transform:uppercase; white-space:nowrap; }
+  .scope-lib { color:var(--gov); background:var(--gov-bg); }
+  .scope-repo { color:var(--ok); background:var(--ok-bg); }
+  .f-files { margin:9px 0 12px; display:flex; flex-wrap:wrap; gap:6px; }
+  .finding p { font-size:14.3px; margin:0 0 9px; }
+  .finding .why { color:var(--ink-soft); }
+  .fix { background:var(--accent-soft); border-radius:9px; padding:12px 14px; margin-top:10px; font-size:13.8px; color:var(--ink); }
+  .fix .fl { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); font-weight:700; display:block; margin-bottom:4px; }
+  .fix.to-box { background:transparent; border:1px dashed var(--line-strong); }
+  .fix.to-box .fl { color:var(--ink-faint); }
+  pre { background:var(--surface-2); border:1px solid var(--line); border-radius:9px; padding:12px 14px; overflow-x:auto; margin:10px 0 0; }
+  pre code { background:none; border:none; padding:0; white-space:pre; font-size:12.5px; line-height:1.55; }
+
+  .strengths { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+  .strengths li { display:grid; grid-template-columns:22px 1fr; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:12px 15px; font-size:14px; color:var(--ink-soft); }
+  .strengths .ck { color:var(--ok); font-weight:700; }
+  .strengths b { color:var(--ink); }
+
+  table.grid { width:100%; border-collapse:collapse; font-size:13.5px; margin-top:6px; }
+  table.grid th, table.grid td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  table.grid th { font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); }
+  table.grid td { color:var(--ink-soft); }
+  .tbl-wrap { overflow-x:auto; }
+
+  .checklist { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+  .checklist li { display:grid; grid-template-columns:24px 1fr; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:12px 15px; font-size:14px; }
+  .checklist .box { width:18px; height:18px; border:2px solid var(--line-strong); border-radius:5px; margin-top:2px; }
+  .checklist .oid { font-family:var(--mono); font-size:11px; color:var(--accent); font-weight:700; }
+  .checklist code { font-size:12.5px; }
+
+  footer { margin-top:60px; font-family:var(--mono); font-size:12px; color:var(--ink-faint); border-top:1px solid var(--line); padding-top:18px; }
+
+  @media (max-width:560px) { .verdict { grid-template-columns:1fr; } }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Shared Library Audit · TS-018</p>
+    <h1>Đánh giá best-practice <span class="mono-hl">conghung-commons</span> v0.3.0</h1>
+    <p class="lead">Thư viện dùng chung cho 6 service. Doc này chấm theo lăng kính <b>SOLID / Clean / Production-Ready</b>: mỗi finding có <b>bằng chứng (file/dòng) → vì sao vi phạm → trade-off → fix ở repo nào</b>. Đây là <b>AUDIT — chưa sửa code</b>.</p>
+    <p style="font-family:var(--mono); font-size:12.5px; color:var(--ink-faint); margin-top:-6px;">✓ Đã đọc 18 file source bản 0.3.0 (từ <code>-sources.jar</code> trong <code>~/.m2</code>) + trace wiring 6 service. Verify jar biên dịch: <code>META-INF/</code> chỉ có MANIFEST + maven descriptor → <b>không có</b> <code>AutoConfiguration.imports</code>.</p>
+    <div class="meta">
+      <span><b>Doc:</b> TS-018</span>
+      <span><b>Artifact:</b> vn.conghung:conghung-commons:0.3.0</span>
+      <span><b>Repo lib:</b> c0nghung/conghung-commons (riêng)</span>
+      <span><b>Ngày:</b> 2026-07-07</span>
+      <span><b>Trạng thái:</b> 📝 AUDIT (doc-only)</span>
+    </div>
+  </header>
+
+  <div class="verdict">
+    <div>
+      <p class="v-label">Kết luận</p>
+      <p class="v-title">Chất lượng code lõi cao, nhưng CHƯA đạt best-practice "shared library" đúng nghĩa — thiếu Spring Boot auto-configuration, lib phụ thuộc ngầm vào package root <code>vn.conghung</code> (coupling ẩn, dễ regression im lặng).</p>
+    </div>
+    <div class="target">
+      <div class="g">~7.0<small>/10</small></div>
+      <span class="s">Shared-Lib<br>Best Practice</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <p class="eyebrow">Tổng quan · 8 finding</p>
+      <h2>Phân bố theo mức độ &amp; repo</h2>
+    </div>
+    <div class="chips">
+      <span class="chip c-crit"><span class="n">1</span> Cao · G1 auto-config</span>
+      <span class="chip c-warn"><span class="n">3</span> Trung bình · G2–G4</span>
+      <span class="chip c-ok"><span class="n">4</span> Thấp · G5–G8</span>
+      <span class="chip c-gov"><span class="n">6</span> fix ở repo commons · 1½ ở repo này</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <p class="eyebrow">Điểm mạnh · đã đạt best practice</p>
+      <h2>Cái gì đang làm đúng</h2>
+    </div>
+    <ul class="strengths">
+      <li><span class="ck">✓</span><span><b>Ranh giới package rõ (SRP)</b> — <code>api</code>/<code>exception</code>/<code>util</code>/<code>web</code>, mỗi type một trách nhiệm.</span></li>
+      <li><span class="ck">✓</span><span><b>DTO immutable</b> — toàn bộ envelope là <code>record</code> + <code>@JsonInclude(NON_NULL)</code>; <code>PageResponse</code> defensive-copy <code>List.copyOf(items)</code>.</span></li>
+      <li><span class="ck">✓</span><span><b>Factory rõ nghĩa</b> — <code>ok</code>/<code>noData</code>/<code>fail</code>; <code>noData(String)</code> đặt tên tránh ambiguity với <code>ok(T)</code> (đúng TS-004 PROPOSAL-003).</span></li>
+      <li><span class="ck">✓</span><span><b>Cây exception hợp banking</b> — <code>IntegrationException</code> (extRef/corrId), <code>UnknownResultException</code> (txRef, HTTP 202) → đúng ngữ cảnh đối soát giao dịch/fintech.</span></li>
+      <li><span class="ck">✓</span><span><b>Handler phủ đủ ma trận lỗi input</b> — validation, constraint, type-mismatch, unreadable body, method-not-supported, catch-all.</span></li>
+      <li><span class="ck">✓</span><span><b>Chống log-injection</b> — <code>sanitize()</code> strip <code>\n</code>/<code>\r</code> trước khi log (best practice bảo mật).</span></li>
+      <li><span class="ck">✓</span><span><b>Scope <code>provided</code></b> cho servlet/validation/spring-data → không ép version transitive lên consumer.</span></li>
+      <li><span class="ck">✓</span><span><b>Publish chuẩn</b> — MIT, SCM, sources+javadoc jar, DevSecOps (SpotBugs+FindSecBugs, OWASP DC, JaCoCo, Sonar).</span></li>
+      <li><span class="ck">✓</span><span><b>Deprecation đúng chuẩn</b> — <code>TraceIdFilter</code> đánh <code>@Deprecated(forRemoval=true)</code> + ghi chú migration.</span></li>
+      <li><span class="ck">✓</span><span><b>Pagination có bound an toàn</b> — <code>PageableFactory</code>: <code>MAX_PAGE_SIZE=100</code>, <code>clamp</code>, page 1→0-based.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <p class="eyebrow">Gap · xếp theo mức độ</p>
+      <h2>Cần cải thiện để đạt best-practice</h2>
+    </div>
+
+    <!-- G1 -->
+    <div class="finding crit">
+      <div class="f-top"><span class="f-tag t-crit">Cao · G1</span><h3>Thiếu Spring Boot auto-configuration</h3><span class="scope scope-lib">Repo commons</span></div>
+      <div class="f-files"><span class="file">GlobalExceptionHandler @RestControllerAdvice</span><span class="file">TraceIdFilter @Component</span><span class="file">jar META-INF (no .imports)</span></div>
+      <p class="why">2 bean chỉ load được vì <b>mọi service đặt main class ở <code>package vn.conghung</code></b>, lib ở <code>vn.conghung.common.*</code> → component-scan <i>tình cờ</i> với tới. Lib <b>không tự-đóng-gói/portable</b>: consumer ở package khác sẽ âm thầm mất handler → HTTP 500 (đúng sự cố TS-001). TS-001 đã kết luận cách đúng là auto-config; repo lại chọn "chuẩn hoá package root" — coupling ẩn.</p>
+      <div class="fix"><span class="fl">Fix</span>Thêm class <code>@AutoConfiguration</code> <code>@Import(GlobalExceptionHandler.class)</code> + file <code>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</code>. Service chỉ cần có dependency là handler tự load, không phụ thuộc package root.
+<pre><code># AutoConfiguration.imports
+vn.conghung.common.autoconfigure.CommonsAutoConfiguration</code></pre></div>
+      <div class="fix to-box"><span class="fl">Trade-off</span>Cách hiện tại đơn giản &amp; "chạy được", nhưng đổi bằng tính portable + rủi ro regression im lặng cho service tương lai. Auto-config là chuẩn ngành cho shared starter.</div>
+    </div>
+
+    <!-- G2 -->
+    <div class="finding warn">
+      <div class="f-top"><span class="f-tag t-warn">TB · G2</span><h3>Lệch timezone &amp; bypass factory khi dựng envelope</h3><span class="scope scope-repo">Commons + repo này</span></div>
+      <div class="f-files"><span class="file">ApiResult.java (ICT_ZONE)</span><span class="file">OrderExceptionHandler.java:25 (UTC)</span></div>
+      <p class="why"><code>ApiResult</code> đóng dấu <code>requestDateTime</code> theo <code>Asia/Ho_Chi_Minh</code>, nhưng <code>OrderExceptionHandler</code> dựng envelope bằng constructor thô với <code>ZoneOffset.UTC</code> → cùng field, cùng API surface, <b>2 zone</b> khác nhau; service còn bypass factory.</p>
+      <div class="fix"><span class="fl">Fix</span>Zone-policy (commons): thống nhất <b>UTC</b> + inject <code>Clock</code> (testable). Handler (repo này): đi qua factory. Gộp với debt timezone toàn cục đã ghi ở <b>TS-017 M3/M4</b>.</div>
+      <div class="fix to-box"><span class="fl">Trade-off</span>ICT→UTC là breaking nhẹ cho client parse local-time → làm đồng loạt commons + account + product + order, kèm changelog.</div>
+    </div>
+
+    <!-- G3 -->
+    <div class="finding warn">
+      <div class="f-top"><span class="f-tag t-warn">TB · G3</span><h3>Phụ thuộc stereotype-scan (<code>@Component</code> trên filter)</h3><span class="scope scope-lib">Repo commons</span></div>
+      <div class="f-files"><span class="file">web/TraceIdFilter.java:21</span></div>
+      <p class="why">Filter no-op (đã <code>@Deprecated forRemoval</code>) nhưng vẫn <code>@Component</code> → bị auto-đăng-ký vào servlet filter chain (mắt xích vô ích). Library không nên dùng stereotype phụ thuộc scan để đăng ký hạ tầng — cùng gốc với G1.</p>
+      <div class="fix"><span class="fl">Fix</span>Chuyển sang auto-config/conditional bean, hoặc <b>xoá hẳn</b> ở major kế tiếp (đường đóng đã rõ nhờ <code>forRemoval</code>).</div>
+    </div>
+
+    <!-- G4 -->
+    <div class="finding warn">
+      <div class="f-top"><span class="f-tag t-warn">TB · G4</span><h3>Thứ tự <code>@RestControllerAdvice</code> không tường minh</h3><span class="scope scope-lib">Repo commons</span></div>
+      <div class="f-files"><span class="file">GlobalExceptionHandler (catch-all Exception, no @Order)</span></div>
+      <p class="why">Advice global có catch-all <code>@ExceptionHandler(Exception.class)</code> nhưng không <code>@Order</code>; advice service cũng không. Hiện exact-match thắng nên đúng, nhưng catch-all không xếp thứ tự là rủi ro tiềm ẩn (có thể che handler cụ thể hơn khi thứ tự bất định).</p>
+      <div class="fix"><span class="fl">Fix</span>Đánh <code>@Order(Ordered.LOWEST_PRECEDENCE)</code> cho advice global → advice service luôn ưu tiên xác định. Chi phí ≈ 0.</div>
+    </div>
+
+    <!-- G5 -->
+    <div class="finding warn">
+      <div class="f-top"><span class="f-tag t-warn">Thấp–TB · G5</span><h3>Parse chuỗi message exception dễ vỡ</h3><span class="scope scope-lib">Repo commons</span></div>
+      <div class="f-files"><span class="file">GlobalExceptionHandler.resolveDetailMessage()</span><span class="file">parseMismatchedInput()</span></div>
+      <p class="why">Bóc <code>HttpMessageNotReadableException.getMessage()</code> bằng substring (<code>"through reference chain:"</code>, <code>"from String \""</code>, <code>type '...'</code>). Phụ thuộc format text Jackson/Spring theo version &amp; locale → dễ gãy khi nâng cấp (Boot 4.x / Jackson 3.x).</p>
+      <div class="fix"><span class="fl">Fix</span>Dùng <b>cause có cấu trúc</b>: <code>InvalidFormatException</code>/<code>MismatchedInputException</code>, <code>getPath()</code> (field), <code>getTargetType()</code> (type) — ổn định qua version.</div>
+    </div>
+
+    <!-- G6 -->
+    <div class="finding warn">
+      <div class="f-top"><span class="f-tag t-warn">Thấp · G6</span><h3>Test coverage chưa rõ / không ship</h3><span class="scope scope-lib">Repo commons</span></div>
+      <div class="f-files"><span class="file">sources jar: chỉ có main</span><span class="file">JaCoCo cấu hình nhưng không thấy test</span></div>
+      <p class="why"><code>GlobalExceptionHandler</code> là code <b>blast-radius lớn nhất toàn hệ</b> (mọi service phụ thuộc contract). Thiếu test ma trận exception→status là rủi ro cho toàn fleet.</p>
+      <div class="fix"><span class="fl">Fix</span>Thêm contract test (<code>@WebMvcTest</code>/standalone <code>MockMvc</code>): mỗi exception → đúng status + <code>responseCode</code> + shape <code>ErrorDetail</code>.</div>
+    </div>
+
+    <!-- G7 -->
+    <div class="finding warn">
+      <div class="f-top"><span class="f-tag t-warn">Thấp · G7</span><h3>Version chưa quản lý tập trung</h3><span class="scope scope-repo">Repo này</span></div>
+      <div class="f-files"><span class="file">order/product/account/mail — pom riêng</span></div>
+      <p class="why">Mỗi service lặp <code>&lt;conghung-commons.version&gt;0.3.0</code> → dễ trôi version (một service quên bump → chạy contract khác).</p>
+      <div class="fix"><span class="fl">Fix</span>Khai 1 lần ở <b>parent pom <code>&lt;dependencyManagement&gt;</code></b>, service khai <code>&lt;dependency&gt;</code> không kèm version. <b>Ngoài scope doc-only</b> → chỉ khuyến nghị.</div>
+    </div>
+
+    <!-- G8 -->
+    <div class="finding warn">
+      <div class="f-top"><span class="f-tag t-warn">Thấp · G8</span><h3><code>ErrorDetail(Object)</code> không kiểu + nullness không nhất quán</h3><span class="scope scope-lib">Repo commons</span></div>
+      <div class="f-files"><span class="file">api/ErrorDetail.java</span><span class="file">jspecify chỉ ở TraceIdFilter</span></div>
+      <p class="why"><code>Object details</code> mất type-safety, khó document cho client (thực tế thường là <code>List&lt;ValidationError&gt;</code>). Annotation nullness không đồng bộ toàn module.</p>
+      <div class="fix"><span class="fl">Fix</span>Document rõ shape của <code>details</code> hoặc dùng type hẹp hơn; chuẩn hoá nullness bằng <code>package-info</code> <code>@NullMarked</code> (jspecify).</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <p class="eyebrow">Remediation roadmap</p>
+      <h2>Việc gì ở repo nào</h2>
+    </div>
+    <p style="font-size:13.8px;"><b>(A) Repo commons</b> <code>c0nghung/conghung-commons</code> — cần checkout repo đó:</p>
+    <div class="tbl-wrap">
+    <table class="grid">
+      <thead><tr><th>#</th><th>Gap</th><th>Việc</th><th>Breaking?</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>G1</td><td><code>@AutoConfiguration</code> + <code>.imports</code> cho handler</td><td>Không (chỉ thêm)</td></tr>
+        <tr><td>2</td><td>G4</td><td><code>@Order(LOWEST_PRECEDENCE)</code> cho global advice</td><td>Không</td></tr>
+        <tr><td>3</td><td>G3</td><td>Filter no-op → auto-config hoặc xoá ở major</td><td>Có (major)</td></tr>
+        <tr><td>4</td><td>G5</td><td>Parse lỗi bằng structured cause</td><td>Không (nội bộ)</td></tr>
+        <tr><td>5</td><td>G6</td><td>Contract test cho handler</td><td>Không</td></tr>
+        <tr><td>6</td><td>G2a</td><td>Zone-policy → UTC + <code>Clock</code></td><td>Có (phối hợp service)</td></tr>
+        <tr><td>7</td><td>G8</td><td>Document/typing <code>ErrorDetail</code> + nullness</td><td>Không</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="font-size:13.8px; margin-top:18px;"><b>(B) Repo này</b> (microservice-full-series) — <b>không apply ở audit này</b>:</p>
+    <div class="tbl-wrap">
+    <table class="grid">
+      <thead><tr><th>Gap</th><th>Việc</th></tr></thead>
+      <tbody>
+        <tr><td>G7</td><td>Đưa <code>conghung-commons.version</code> lên parent pom <code>&lt;dependencyManagement&gt;</code></td></tr>
+        <tr><td>G2b</td><td>Các <code>*ExceptionHandler</code> đi qua factory + UTC nhất quán (đồng bộ khi làm G2a)</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <p class="eyebrow">Verify · tick khi thực thi</p>
+      <h2>Checklist kiểm chứng</h2>
+    </div>
+    <ul class="checklist">
+      <li><span class="box"></span><span><span class="oid">V1</span> — G1: tạo 1 module test ở <code>package com.test</code> chỉ khai dependency → vẫn nhận <code>GlobalExceptionHandler</code> (400 thay vì 500).</span></li>
+      <li><span class="box"></span><span><span class="oid">V2</span> — G4: exception của service vẫn được advice riêng bắt trước catch-all sau khi thêm <code>@Order</code>.</span></li>
+      <li><span class="box"></span><span><span class="oid">V3</span> — G5: malformed JSON / sai kiểu vẫn ra message hợp lý sau khi bỏ string-scraping.</span></li>
+      <li><span class="box"></span><span><span class="oid">V4</span> — G2: <code>requestDateTime</code> đồng nhất UTC ở cả success lẫn error trên mọi service.</span></li>
+      <li><span class="box"></span><span><span class="oid">V5</span> — G7: mọi service dùng đúng 1 version từ parent pom.</span></li>
+    </ul>
+  </section>
+
+  <footer>
+    TS-018 · shared-library audit · conghung-commons 0.3.0 · nối tiếp TS-001 / TS-004 / TS-008 · trạng thái: AUDIT (doc-only, chưa sửa code cả 2 repo).
+  </footer>
+
+</div>
