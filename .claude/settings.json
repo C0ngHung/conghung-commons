@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw test)",
+      "Bash(./mvnw test:*)",
+      "Bash(./mvnw clean test)",
+      "Bash(./mvnw clean verify:*)",
+      "Bash(./mvnw -q test)",
+      "Bash(./mvnw dependency:*)",
+      "Bash(git status)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git restore:*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && if git diff --quiet -- '*.java' pom.xml && git diff --cached --quiet -- '*.java' pom.xml; then exit 0; fi; ./mvnw -q test > /tmp/mvn-stop-hook.log 2>&1 || { echo 'HOOK: test dang do — chay \"./mvnw test\" va sua truoc khi ket thuc. Log: /tmp/mvn-stop-hook.log' >&2; exit 2; }"
+          }
+        ]
+      }
+    ]
+  }
+}

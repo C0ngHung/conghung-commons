@@ -3,6 +3,8 @@ package vn.conghung.common.api;
 import org.junit.jupiter.api.Test;
 import vn.conghung.common.exception.ResponseCode;
 
+import java.time.ZoneOffset;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class ApiResultTest {
@@ -133,5 +135,19 @@ class ApiResultTest {
         assertEquals("someString", result.data());
         assertNull(result.error());
         assertEquals("0000", result.result().responseCode());
+    }
+
+    // ── TS-018 G2a: requestDateTime is stamped in UTC ────────────────────────
+
+    @Test
+    void ok_requestDateTime_isStampedInUtc() {
+        ApiResult<String> result = ApiResult.ok("data");
+        assertEquals(ZoneOffset.UTC, result.requestDateTime().getOffset());
+    }
+
+    @Test
+    void fail_requestDateTime_isStampedInUtc() {
+        ApiResult<Void> result = ApiResult.fail(ResponseCode.SYS_INTERNAL_ERROR);
+        assertEquals(ZoneOffset.UTC, result.requestDateTime().getOffset());
     }
 }

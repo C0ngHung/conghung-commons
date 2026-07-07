@@ -71,6 +71,14 @@
             <artifactId>spring-context</artifactId>
         </dependency>
 
+        <!-- Provides @AutoConfiguration so the library registers its beans (GlobalExceptionHandler)
+             regardless of the consumer's package root. Provided: the consumer's Spring Boot app supplies it. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
@@ -94,6 +102,15 @@
             <artifactId>jackson-annotations</artifactId>
         </dependency>
 
+        <!-- Jackson 3 (tools.jackson) databind: structured deserialization exceptions
+             (InvalidFormatException / MismatchedInputException) for the exception handler.
+             Provided: the consumer's Spring Boot app already ships Jackson. -->
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -102,6 +119,22 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Test-only: MockMvc (DispatcherServlet) for contract tests of the @RestControllerAdvice.
+             Not part of the published artifact. -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Test-only: Bean Validation provider so @Valid triggers real
+             MethodArgumentNotValidException in the MockMvc contract test. -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
