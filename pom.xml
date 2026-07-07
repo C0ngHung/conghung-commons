@@ -102,6 +102,15 @@
             <artifactId>jackson-annotations</artifactId>
         </dependency>
 
+        <!-- Jackson 3 (tools.jackson) databind: structured deserialization exceptions
+             (InvalidFormatException / MismatchedInputException) for the exception handler.
+             Provided: the consumer's Spring Boot app already ships Jackson. -->
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>

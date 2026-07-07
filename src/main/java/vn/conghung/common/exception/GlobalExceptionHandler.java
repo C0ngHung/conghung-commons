@@ -14,6 +14,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.exc.InvalidFormatException;
+import tools.jackson.databind.exc.MismatchedInputException;
 import vn.conghung.common.api.ApiResult;
 import vn.conghung.common.api.ValidationError;
 
@@ -108,22 +111,17 @@ public class GlobalExceptionHandler {
             log.warn("Unreadable HTTP message at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()));
         }
 
-        String msg = ex.getMessage();
-
         String fieldName = "requestBody";
+        String detailMessage;
 
-        if (msg != null && msg.contains("through reference chain:")) {
-
-            int start = msg.lastIndexOf("[\"");
-
-            int end = msg.lastIndexOf("\"]");
-
-            if (start != -1 && end != -1 && start + 2 < end) {
-                fieldName = msg.substring(start + 2, end);
-            }
+        // Prefer structured Jackson causes over scraping the (version/locale-dependent) message text
+        // — stable across Jackson/Spring upgrades and does not echo internal class paths (TS-018 gap G5).
+        if (ex.getCause() instanceof MismatchedInputException mie) {
+            fieldName = resolveFieldName(mie);
+            detailMessage = describeMismatch(mie);
+        } else {
+            detailMessage = "Required request body is missing or malformed";
         }
-
-        String detailMessage = resolveDetailMessage(ex);
 
         List<ValidationError> validationErrors = List.of(new ValidationError(fieldName, detailMessage));
 
@@ -131,66 +129,51 @@ public class GlobalExceptionHandler {
                 .body(ApiResult.fail(ResponseCode.REQ_BAD_REQUEST, ResponseCode.REQ_BAD_REQUEST.defaultMessage(), validationErrors));
     }
 
-    private String resolveDetailMessage(HttpMessageNotReadableException ex) {
+    /**
+     * Builds a dotted field path from the Jackson reference chain (e.g. {@code user.age},
+     * {@code items[2].price}). Falls back to {@code "requestBody"} when no path is available.
+     */
+    private String resolveFieldName(MismatchedInputException mie) {
 
-        String msg = ex.getMessage();
+        List<JacksonException.Reference> path = mie.getPath();
 
-        if (msg == null) {
-            return "Required request body is missing or malformed";
+        if (path == null || path.isEmpty()) {
+            return "requestBody";
         }
 
-        if (msg.contains("Required request body is missing")) {
-            return "Required request body is missing";
+        StringBuilder sb = new StringBuilder();
+
+        for (JacksonException.Reference ref : path) {
+            String property = ref.getPropertyName();
+            if (property != null) {
+                if (sb.length() > 0) {
+                    sb.append('.');
+                }
+                sb.append(property);
+            } else if (ref.getIndex() >= 0) {
+                sb.append('[').append(ref.getIndex()).append(']');
+            }
         }
 
-        if (msg.contains("Cannot deserialize value of type")) {
-            return parseMismatchedInput(msg);
-        }
-
-        if (msg.contains("REDACTED") || msg.contains("StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION")) {
-            return "Malformed JSON request body";
-        }
-
-        String mostSpecific = ex.getMostSpecificCause().getMessage();
-
-        if (mostSpecific == null) {
-            return "Required request body is missing or malformed";
-        }
-
-        String parsedMessage = mostSpecific.contains(":") 
-                ? mostSpecific.substring(mostSpecific.indexOf(":") + 1).trim() 
-                : mostSpecific;
-
-        if (parsedMessage.contains("REDACTED") || parsedMessage.contains("StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION")) {
-            return "Malformed JSON request body";
-        }
-
-        return parsedMessage;
+        return sb.length() == 0 ? "requestBody" : sb.toString();
     }
 
-    private String parseMismatchedInput(String msg) {
+    /**
+     * Describes a deserialization mismatch using the structured target type (and, for
+     * {@link InvalidFormatException}, the offending value) instead of scraped message text.
+     */
+    private String describeMismatch(MismatchedInputException mie) {
 
-        String type = "";
+        Class<?> targetType = mie.getTargetType();
+        String type = targetType != null ? targetType.getSimpleName() : "";
 
-        int typeStart = msg.indexOf("type '");
-
-        int typeEnd = msg.indexOf("'", typeStart + 6);
-
-        if (typeStart != -1 && typeEnd != -1) {
-
-            String fullType = msg.substring(typeStart + 6, typeEnd);
-
-            type = fullType.substring(fullType.lastIndexOf('.') + 1);
+        String value = "";
+        if (mie instanceof InvalidFormatException ife && ife.getValue() != null) {
+            value = String.valueOf(ife.getValue());
         }
 
-        String val = extractValueFromString(msg, "from String \"", "\"");
-
-        if (val.isEmpty()) {
-            val = extractValueFromString(msg, "from String '", "'");
-        }
-
-        if (!type.isEmpty() && !val.isEmpty()) {
-            return "Invalid value '" + val + "' for type " + type;
+        if (!type.isEmpty() && !value.isEmpty()) {
+            return "Invalid value '" + value + "' for type " + type;
         }
 
         if (!type.isEmpty()) {
@@ -198,23 +181,6 @@ public class GlobalExceptionHandler {
         }
 
         return "Invalid value format";
-    }
-
-    private String extractValueFromString(String msg, String prefix, String suffix) {
-
-        if (!msg.contains(prefix)) {
-            return "";
-        }
-
-        int start = msg.indexOf(prefix);
-
-        int end = msg.indexOf(suffix, start + prefix.length());
-
-        if (start != -1 && end != -1) {
-            return msg.substring(start + prefix.length(), end);
-        }
-        
-        return "";
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

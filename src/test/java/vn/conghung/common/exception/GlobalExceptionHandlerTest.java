@@ -14,6 +14,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.exc.InvalidFormatException;
+import tools.jackson.databind.exc.MismatchedInputException;
 import vn.conghung.common.api.ApiResult;
 import vn.conghung.common.api.ValidationError;
 
@@ -107,7 +110,7 @@ class GlobalExceptionHandlerTest {
     void testHandleValidationException() {
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
-        
+
         FieldError fieldError1 = new FieldError("form", "amount", "must not be null");
         FieldError fieldError2 = new FieldError("form", "currency", "must not be blank");
         FieldError fieldError3 = new FieldError("form", "email", null); // triggers default message logic
@@ -122,7 +125,7 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("1001", response.getBody().result().responseCode());
-        
+
         assertNotNull(response.getBody().error());
         List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
         assertNotNull(details);
@@ -132,62 +135,22 @@ class GlobalExceptionHandlerTest {
         assertTrue(details.contains(new ValidationError("email", "Invalid value")));
     }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    void testHandleHttpMessageNotReadableException() {
-        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
-        when(ex.getMessage()).thenReturn("Invalid JSON structure");
-        
-        // Test with null specific cause message
-        Throwable mockCauseWithNullMsg = mock(Throwable.class);
-        when(mockCauseWithNullMsg.getMessage()).thenReturn(null);
-        when(ex.getMostSpecificCause()).thenReturn(mockCauseWithNullMsg);
-        
-        ResponseEntity<ApiResult<Void>> responseNullCause = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
-        assertNotNull(responseNullCause);
-        assertEquals(HttpStatus.BAD_REQUEST, responseNullCause.getStatusCode());
-        assertEquals("1002", responseNullCause.getBody().result().responseCode());
-        List<ValidationError> detailsNull = (List<ValidationError>) responseNullCause.getBody().error().details();
-        assertEquals("Required request body is missing or malformed", detailsNull.get(0).message());
-
-        // Test with specific cause containing colon
-        Throwable causeWithColon = new RuntimeException("JSON parsing failed: Cannot deserialize value of type java.lang.Integer from String");
-        when(ex.getMostSpecificCause()).thenReturn(causeWithColon);
-        ResponseEntity<ApiResult<Void>> responseWithColon = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
-        assertNotNull(responseWithColon);
-        List<ValidationError> detailsWithColon = (List<ValidationError>) responseWithColon.getBody().error().details();
-        assertEquals("Cannot deserialize value of type java.lang.Integer from String", detailsWithColon.get(0).message());
-
-        // Test with specific cause without colon
-        Throwable causeWithoutColon = new RuntimeException("Malformed UTF-8 characters");
-        when(ex.getMostSpecificCause()).thenReturn(causeWithoutColon);
-        ResponseEntity<ApiResult<Void>> responseWithoutColon = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
-        assertNotNull(responseWithoutColon);
-        List<ValidationError> detailsWithoutColon = (List<ValidationError>) responseWithoutColon.getBody().error().details();
-        assertEquals("Malformed UTF-8 characters", detailsWithoutColon.get(0).message());
-    }
+    // --- HttpMessageNotReadableException: structured Jackson causes (TS-018 G5) ---
 
     @Test
     @SuppressWarnings("unchecked")
-    void testHandleHttpMessageNotReadableException_MissingBody() {
+    void handleHttpMessageNotReadable_invalidFormat_extractsFieldValueAndType() {
         HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
-        when(ex.getMessage()).thenReturn("Required request body is missing: public void createUser(UserDto)");
+        when(ex.getMessage()).thenReturn("JSON parse error");
+        InvalidFormatException ife = InvalidFormatException.from(null, "not a valid Integer value", "abc", Integer.class);
+        ife.prependPath(new JacksonException.Reference("root", "age"));
+        when(ex.getCause()).thenReturn(ife);
 
         ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
-        assertNotNull(response);
-        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
-        assertEquals("requestBody", details.get(0).field());
-        assertEquals("Required request body is missing", details.get(0).message());
-    }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    void testHandleHttpMessageNotReadableException_JacksonFieldExtraction() {
-        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
-        when(ex.getMessage()).thenReturn("Cannot deserialize value of type 'java.lang.Integer' from String \"abc\": not a valid Integer value through reference chain: vn.conghung.dto.UserDto[\"age\"]");
-
-        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
         assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("1002", response.getBody().result().responseCode());
         List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
         assertEquals("age", details.get(0).field());
         assertEquals("Invalid value 'abc' for type Integer", details.get(0).message());
@@ -195,121 +158,69 @@ class GlobalExceptionHandlerTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void testHandleHttpMessageNotReadableException_JacksonRedactedSensitiveDetails() {
+    void handleHttpMessageNotReadable_nestedPath_buildsDottedFieldName() {
         HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
-        when(ex.getMessage()).thenReturn("StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION internal class path leaks vn.conghung.dto.UserDto[\"email\"]");
+        when(ex.getMessage()).thenReturn("JSON parse error");
+        InvalidFormatException ife = InvalidFormatException.from(null, "bad", "xyz", Long.class);
+        // prependPath adds to the front → resulting path is [user, id]
+        ife.prependPath(new JacksonException.Reference("root", "id"));
+        ife.prependPath(new JacksonException.Reference("root", "user"));
+        when(ex.getCause()).thenReturn(ife);
 
         ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
-        assertNotNull(response);
+
         List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
-        assertEquals("requestBody", details.get(0).field());
-        assertEquals("Malformed JSON request body", details.get(0).message());
+        assertEquals("user.id", details.get(0).field());
+        assertEquals("Invalid value 'xyz' for type Long", details.get(0).message());
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void testHandleHttpMessageNotReadableException_NullMessage() {
-        // Covers: resolveDetailMessage -> msg == null branch
+    void handleHttpMessageNotReadable_mismatchedInputNoValue_formatMessage() {
         HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
-        when(ex.getMessage()).thenReturn(null);
+        when(ex.getMessage()).thenReturn("JSON parse error");
+        MismatchedInputException mie = MismatchedInputException.from(null, Boolean.class, "cannot map null to boolean");
+        mie.prependPath(new JacksonException.Reference("root", "active"));
+        when(ex.getCause()).thenReturn(mie);
 
         ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
 
-        assertNotNull(response);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
-        assertEquals("requestBody", details.get(0).field());
-        assertEquals("Required request body is missing or malformed", details.get(0).message());
+        assertEquals("active", details.get(0).field());
+        assertEquals("Invalid format for type Boolean", details.get(0).message());
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void testHandleHttpMessageNotReadableException_NoReferenceChainQuotes() {
-        // Covers: 'through reference chain:' present but quotes/brackets malformed -> fieldName stays "requestBody"
+    void handleHttpMessageNotReadable_invalidFormatNoPath_fallsBackToRequestBody() {
         HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
-        when(ex.getMessage()).thenReturn("Cannot deserialize value of type 'java.lang.Integer' from String \"abc\": not a valid Integer value through reference chain: vn.conghung.dto.UserDto[age]");
+        when(ex.getMessage()).thenReturn("JSON parse error");
+        InvalidFormatException ife = InvalidFormatException.from(null, "bad", "abc", Integer.class);
+        // no prependPath → empty reference chain
+        when(ex.getCause()).thenReturn(ife);
 
         ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
 
-        assertNotNull(response);
         List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
-        // field remains "requestBody" because the ["..."] pattern is absent
         assertEquals("requestBody", details.get(0).field());
         assertEquals("Invalid value 'abc' for type Integer", details.get(0).message());
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void testHandleHttpMessageNotReadableException_MostSpecificCauseRedacted() {
-        // Covers: msg is clean, but mostSpecificCause contains sensitive StreamReadFeature -> REDACTED branch in resolveDetailMessage
+    void handleHttpMessageNotReadable_nonJacksonCause_genericMessage() {
         HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
-        when(ex.getMessage()).thenReturn("Some generic parse error");
-        Throwable sensitiveCause = new RuntimeException("StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION internal classpath leak");
-        when(ex.getMostSpecificCause()).thenReturn(sensitiveCause);
+        when(ex.getMessage()).thenReturn("Required request body is missing");
+        when(ex.getCause()).thenReturn(null);
 
         ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
 
         assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("1002", response.getBody().result().responseCode());
         List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
-        assertEquals("Malformed JSON request body", details.get(0).message());
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testHandleHttpMessageNotReadableException_MismatchedValueSingleQuotes() {
-        // Covers: parseMismatchedInput -> extractValueFromString with single-quote fallback branch
-        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
-        when(ex.getMessage()).thenReturn("Cannot deserialize value of type 'java.lang.Long' from String 'xyz': not a valid Long value");
-
-        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
-
-        assertNotNull(response);
-        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
-        assertEquals("Invalid value 'xyz' for type Long", details.get(0).message());
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testHandleHttpMessageNotReadableException_MismatchedMissingType() {
-        // Covers: parseMismatchedInput -> both type and val empty -> "Invalid value format"
-        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
-        when(ex.getMessage()).thenReturn("Cannot deserialize value of type `SomeType` unexpected token");
-
-        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
-
-        assertNotNull(response);
-        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
-        assertEquals("Invalid value format", details.get(0).message());
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testHandleHttpMessageNotReadableException_MismatchedTypeOnlyNoValue() {
-        // Covers: parseMismatchedInput -> type found but val empty -> "Invalid format for type X"
-        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
-        // Has type 'java.lang.Boolean' but no recognizable from String "..." or '...' pattern
-        when(ex.getMessage()).thenReturn("Cannot deserialize value of type 'java.lang.Boolean' from token VALUE_NULL");
-
-        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
-
-        assertNotNull(response);
-        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
-        assertEquals("Invalid format for type Boolean", details.get(0).message());
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testHandleHttpMessageNotReadableException_ExtractValueMissingSuffix() {
-        // Covers: extractValueFromString -> prefix found but suffix not found -> returns ""
-        // Message has from String " but missing the closing " -> triggers fallback to single-quote path, also fails -> "Invalid format for type"
-        HttpMessageNotReadableException ex = mock(HttpMessageNotReadableException.class);
-        when(ex.getMessage()).thenReturn("Cannot deserialize value of type 'java.lang.Integer' from String \"unclosed");
-
-        ResponseEntity<ApiResult<Void>> response = exceptionHandler.handleHttpMessageNotReadableException(ex, request);
-
-        assertNotNull(response);
-        List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
-        assertEquals("Invalid format for type Integer", details.get(0).message());
+        assertEquals("requestBody", details.get(0).field());
+        assertEquals("Required request body is missing or malformed", details.get(0).message());
     }
 
     @Test
@@ -354,7 +265,7 @@ class GlobalExceptionHandlerTest {
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("1005", response.getBody().result().responseCode());
-        
+
         List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
         assertNotNull(details);
         assertEquals(1, details.size());
@@ -387,11 +298,11 @@ class GlobalExceptionHandlerTest {
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("1001", response.getBody().result().responseCode());
-        
+
         List<ValidationError> details = (List<ValidationError>) response.getBody().error().details();
         assertNotNull(details);
         assertEquals(2, details.size());
-        
+
         boolean foundEmail = false;
         boolean foundAmount = false;
         for (ValidationError err : details) {
