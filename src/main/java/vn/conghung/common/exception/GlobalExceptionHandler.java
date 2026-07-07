@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.jspecify.annotations.Nullable;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.exc.InvalidFormatException;
 import tools.jackson.databind.exc.MismatchedInputException;
@@ -253,7 +254,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(ApiResult.fail(code, message));
     }
 
-    private String sanitize(String input) {
+    private @Nullable String sanitize(@Nullable String input) {
         if (input == null) {
             return null;
         }

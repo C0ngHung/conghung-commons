@@ -1,13 +1,23 @@
 package vn.conghung.common.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.jspecify.annotations.Nullable;
 import vn.conghung.common.exception.ResponseCode;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 
+/**
+ * Unified API response envelope.
+ *
+ * @param <T>             payload type
+ * @param result          status carrier (response code + description); always present
+ * @param data            success payload; {@code null} for errors and void operations
+ * @param error           structured error detail; {@code null} for success responses
+ * @param requestDateTime response timestamp (UTC)
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record ApiResult<T>(ResultInfo result, T data, ErrorDetail error, OffsetDateTime requestDateTime) {
+public record ApiResult<T>(ResultInfo result, @Nullable T data, @Nullable ErrorDetail error, OffsetDateTime requestDateTime) {
 
     private static final ZoneId ICT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
