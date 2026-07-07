@@ -23,8 +23,9 @@ Lightweight shared infrastructure kernel for Spring Boot web applications.
 | `exception` | `IntegrationException` | External system failure (HTTP 502) |
 | `exception` | `UnknownResultException` | Timeout/unknown transaction result (HTTP 202) |
 | `exception` | `ResourceNotFoundException` | Resource not found (HTTP 404) |
-| `exception` | `GlobalExceptionHandler` | Centralized `@RestControllerAdvice` with proper log levels |
-| `web` | `TraceIdFilter` | **(Deprecated since 0.2.10)** Pass-through filter kept temporarily to avoid breaking changes |
+| `exception` | `GlobalExceptionHandler` | Centralized `@RestControllerAdvice` (ordered `LOWEST_PRECEDENCE`), auto-registered via auto-configuration |
+| `autoconfigure` | `CommonsAutoConfiguration` | Auto-registers `GlobalExceptionHandler` — no component-scan / package-root required |
+| `web` | `TraceIdFilter` | **(Deprecated since 0.2.10; no longer auto-registered since 0.3.1)** Pass-through filter kept for source compatibility |
 | `util` | `SortParser` | Utility for parsing sorting query parameters (e.g. `field:dir`) with ASCII-safe, default fallback to `id:asc` |
 | `util` | `PageableFactory` | Utility for generating `Pageable` parameters from client query inputs (handling nulls and clamping size limits) |
 
@@ -72,6 +73,8 @@ Add the dependency:
     <version>0.2.12</version>
 </dependency>
 ```
+
+> **Auto-configuration (since 0.3.1):** `GlobalExceptionHandler` is registered automatically via Spring Boot auto-configuration (`META-INF/spring/...AutoConfiguration.imports`). You get it simply by having the dependency — **no `@ComponentScan` tuning or shared `vn.conghung` package root required**, regardless of your application's base package.
 
 Configure authentication in `~/.m2/settings.xml`:
 
@@ -276,9 +279,11 @@ public ApiResult<PageResponse<UserResponseDto>> getUsers(
       { "userId": 2, "email": "bob@example.com" }
     ]
   },
-  "requestDateTime": "2026-06-08T12:00:00+07:00"
+  "requestDateTime": "2026-06-08T05:00:00Z"
 }
 ```
+
+> **Timezone (since 0.3.1):** `requestDateTime` is stamped in **UTC** (`Z`) on every response, success and error alike. Previously it used `Asia/Ho_Chi_Minh` (UTC+7) — see the `BREAKING CHANGE` note in the changelog. Consumers displaying local time must convert.
 
 ### 4. Sorting & Pagination Query Parsing (`PageableFactory` / `SortParser`)
 
@@ -307,6 +312,8 @@ public ApiResult<PageResponse<UserResponseDto>> getUsers(
 
 > [!WARNING]
 > **Deprecated since v0.2.10**: `TraceIdFilter` is now deprecated and is kept only as a pass-through filter to avoid compilation/runtime failures in downstream microservices. It no longer extracts headers, generates UUIDs, or writes to MDC. Trace propagation should be handled via modern distributed tracing tools like Spring Cloud Sleuth or Micrometer.
+>
+> **Since v0.3.1**: the `@Component` stereotype was removed, so this no-op filter is **no longer auto-registered** into the servlet chain. The class is retained for source compatibility and is slated for removal in the next major.
 
 
 ## Design Principles

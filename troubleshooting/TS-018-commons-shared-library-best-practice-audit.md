@@ -240,11 +240,13 @@ nullness bằng `package-info.java` `@NullMarked` (jspecify) cho toàn module.
 
 ## 6. Checklist khi thực thi (sau khi duyệt)
 
-- [ ] **G1:** service ở package bất kỳ vẫn nhận `GlobalExceptionHandler` chỉ nhờ dependency (test bằng 1 module package `com.test`).
-- [ ] **G4:** exception service vẫn được advice riêng bắt trước catch-all sau khi thêm `@Order`.
-- [ ] **G5:** malformed JSON / sai kiểu vẫn ra message hợp lý sau khi bỏ string-scraping.
-- [ ] **G2:** `requestDateTime` đồng nhất UTC ở cả success lẫn error trên mọi service.
-- [ ] **G7:** mọi service dùng đúng 1 version từ parent pom.
+- [x] **G1:** service ở package bất kỳ vẫn nhận `GlobalExceptionHandler` chỉ nhờ dependency — ✅ auto-config + `ApplicationContextRunner` test (PROJ-9, commit `feat(autoconfigure)`).
+- [x] **G4:** exception service vẫn được advice riêng bắt trước catch-all sau khi thêm `@Order` — ✅ `@Order(LOWEST_PRECEDENCE)` + `GlobalExceptionHandlerOrderingTest`.
+- [x] **G5:** malformed JSON / sai kiểu vẫn ra message hợp lý sau khi bỏ string-scraping — ✅ structured Jackson 3 cause + contract test.
+- [x] **G2 (commons/G2a):** `requestDateTime` đồng nhất UTC (success + error) trong commons — ✅ `ApiResult` → `ZoneOffset.UTC`. Phần service (G2b) còn lại ở repo microservice.
+- [ ] **G7:** mọi service dùng đúng 1 version từ parent pom — ⏭ ngoài scope repo commons (repo microservice).
+
+> **Đã xử lý ở repo commons (PROJ-9, branch `feature/PROJ-9-ts018-shared-library-best-practices`):** G1, G3, G4, G5, G6, G8, G2a. Còn lại G7, G2b thuộc repo microservice.
 
 ---
 
