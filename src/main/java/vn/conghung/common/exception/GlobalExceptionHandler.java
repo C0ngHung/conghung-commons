@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -17,7 +19,16 @@ import vn.conghung.common.api.ValidationError;
 
 import java.util.List;
 
+/**
+ * Global exception handler for consuming services.
+ *
+ * <p>Ordered at {@link Ordered#LOWEST_PRECEDENCE} (TS-018 gap G4): because this advice contains a
+ * catch-all {@code @ExceptionHandler(Exception.class)}, a service-specific {@code @RestControllerAdvice}
+ * (unordered, thus higher precedence) is guaranteed to be consulted first. This removes the latent
+ * risk of the generic catch-all shadowing a more specific handler declared elsewhere.
+ */
 @RestControllerAdvice
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
