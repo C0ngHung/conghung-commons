@@ -7,8 +7,8 @@ import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PageResponseTest {
@@ -23,14 +23,6 @@ class PageResponseTest {
         assertEquals(2, response.totalPages());
         assertEquals(20L, response.totalElements());
         assertEquals(items, response.items());
-    }
-
-    @Test
-    void testNullItemsFallbackToEmptyList() {
-        PageResponse<String> response = new PageResponse<>(1, 10, 0, 0L, null);
-
-        assertNotNull(response.items());
-        assertTrue(response.items().isEmpty());
     }
 
     @Test

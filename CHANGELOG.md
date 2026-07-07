@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0](https://github.com/C0ngHung/conghung-commons/compare/v0.3.0...v1.0.0) (2026-07-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **web:** `TraceIdFilter` (deprecated since v0.2.10, `forRemoval=true`) has been fully removed.
+  Any consumer importing or referencing `vn.conghung.common.web.TraceIdFilter` must remove those
+  references before upgrading. Use Spring Cloud Sleuth or Micrometer for distributed tracing.
+
+
+### Bug Fixes
+
+* **exception:** extract duplicated `"requestBody"` string literal to `FIELD_REQUEST_BODY` constant (Sonar S1192) ([PROJ-9](https://github.com/C0ngHung/conghung-commons/issues/9))
+* **exception:** replace `StringBuilder.length()` checks with `isEmpty()` (Sonar S1155) ([PROJ-9](https://github.com/C0ngHung/conghung-commons/issues/9))
+* **exception:** remove redundant default parameter value from `@Order` annotation (Sonar) ([PROJ-9](https://github.com/C0ngHung/conghung-commons/issues/9))
+* **exception:** fix brace formatting on `log.error` blocks in `GlobalExceptionHandler` ([PROJ-9](https://github.com/C0ngHung/conghung-commons/issues/9))
+* **api:** remove always-true null-check in `PageResponse` compact constructor under `@NullMarked` ([PROJ-9](https://github.com/C0ngHung/conghung-commons/issues/9))
+
+
 ## [0.3.0](https://github.com/C0ngHung/conghung-commons/compare/v0.2.12...v0.3.0) (2026-06-15)
 
 

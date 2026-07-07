@@ -25,7 +25,6 @@ Lightweight shared infrastructure kernel for Spring Boot web applications.
 | `exception` | `ResourceNotFoundException` | Resource not found (HTTP 404) |
 | `exception` | `GlobalExceptionHandler` | Centralized `@RestControllerAdvice` (ordered `LOWEST_PRECEDENCE`), auto-registered via auto-configuration |
 | `autoconfigure` | `CommonsAutoConfiguration` | Auto-registers `GlobalExceptionHandler` — no component-scan / package-root required |
-| `web` | `TraceIdFilter` | **(Deprecated since 0.2.10; no longer auto-registered since 0.3.1)** Pass-through filter kept for source compatibility |
 | `util` | `SortParser` | Utility for parsing sorting query parameters (e.g. `field:dir`) with ASCII-safe, default fallback to `id:asc` |
 | `util` | `PageableFactory` | Utility for generating `Pageable` parameters from client query inputs (handling nulls and clamping size limits) |
 
@@ -308,12 +307,10 @@ public ApiResult<PageResponse<UserResponseDto>> getUsers(
 }
 ```
 
-### 5. End-to-End Log Traceability (Deprecated)
+### 5. End-to-End Log Traceability
 
 > [!WARNING]
-> **Deprecated since v0.2.10**: `TraceIdFilter` is now deprecated and is kept only as a pass-through filter to avoid compilation/runtime failures in downstream microservices. It no longer extracts headers, generates UUIDs, or writes to MDC. Trace propagation should be handled via modern distributed tracing tools like Spring Cloud Sleuth or Micrometer.
->
-> **Since v0.3.1**: the `@Component` stereotype was removed, so this no-op filter is **no longer auto-registered** into the servlet chain. The class is retained for source compatibility and is slated for removal in the next major.
+> **Removed in v1.0.0**: `TraceIdFilter` has been fully removed (deprecated since v0.2.10, `forRemoval=true`). If your code imports or references `TraceIdFilter`, remove those references before upgrading. Trace propagation should be handled via modern distributed tracing tools like Spring Cloud Sleuth or Micrometer.
 
 
 ## Design Principles

@@ -14,7 +14,7 @@ public record PageResponse<T>(
 ) {
 
     public PageResponse {
-        items = (items != null) ? List.copyOf(items) : List.of();
+        items = List.copyOf(items);
     }
 
     public static <E, T> PageResponse<T> of(int pageNo, Page<E> page, Function<E, T> mapper) {
