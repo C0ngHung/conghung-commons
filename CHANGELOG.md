@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0](https://github.com/C0ngHung/conghung-commons/compare/v1.0.0...v2.0.0) (2026-07-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **core:** TraceIdFilter (deprecated since v0.2.10, forRemoval=true) and the web package have been fully removed. Any consumer importing vn.conghung.common.web.TraceIdFilter must remove those references before upgrading. Use Spring Cloud Sleuth or Micrometer for distributed tracing.
+
+### Features
+
+* **api:** add ApiResult.ok() and noData() factory methods for void operations [MICRO-002] ([#40](https://github.com/C0ngHung/conghung-commons/issues/40)) ([35f0857](https://github.com/C0ngHung/conghung-commons/commit/35f085730c9f9db7b7caeb0632b1c67d25f01b21))
+* **api:** add PageResponse record and deprecate TraceIdFilter ([#37](https://github.com/C0ngHung/conghung-commons/issues/37)) ([2697b4d](https://github.com/C0ngHung/conghung-commons/commit/2697b4d19fb1df0236f0cbec576d4180374d22a7))
+* **exception:** add standardized spring mvc exception handlers for PROJ-6 ([#30](https://github.com/C0ngHung/conghung-commons/issues/30)) ([a0ad2f9](https://github.com/C0ngHung/conghung-commons/commit/a0ad2f94aa92f932b2fc5c7205b2970f63947ad8))
+* **pagination-sort:** introduce SortParser and PageableFactory and bump target to 0.3.0 ([#43](https://github.com/C0ngHung/conghung-commons/issues/43)) ([de27c4f](https://github.com/C0ngHung/conghung-commons/commit/de27c4fb8ceba0829282c0d549940026c495c45f))
+* **validation:** implement standardized validation errors list for PROJ-5 ([797d538](https://github.com/C0ngHung/conghung-commons/commit/797d538c3d1564197722a2275416b266f0f99697))
+
+
+### Bug Fixes
+
+* **api:** change timestamp to requestDateTime with OffsetDateTime timezone for PROJ-5 ([#24](https://github.com/C0ngHung/conghung-commons/issues/24)) ([d97e35c](https://github.com/C0ngHung/conghung-commons/commit/d97e35c31d86af32da254a56d913917e5112d5ac))
+* **ci:** solve local dependency-check failure and add devsecops guidelines (PROJ-4) ([#10](https://github.com/C0ngHung/conghung-commons/issues/10)) ([0764145](https://github.com/C0ngHung/conghung-commons/commit/07641455fb325eb1a6b63e4ae686589d15aedc9e))
+* **core:** remove TraceIdFilter and resolve sonar issues [PROJ-9] ([#47](https://github.com/C0ngHung/conghung-commons/issues/47)) ([a0c5d97](https://github.com/C0ngHung/conghung-commons/commit/a0c5d9794a37a26c076b1b6d414f3df53c49721e))
+* **exception:** enhance jackson deserialization error parsing and field extraction ([#33](https://github.com/C0ngHung/conghung-commons/issues/33)) ([6e872e7](https://github.com/C0ngHung/conghung-commons/commit/6e872e75e5faa6120f4c5419a13c8fddabde2885))
+* **PROJ-4:** trigger release please with standard conventional commit format ([560e02d](https://github.com/C0ngHung/conghung-commons/commit/560e02d42a3edd5af387cb6779ed9656e76b4010))
+* **release:** integrate github app token to unblock CI ([#13](https://github.com/C0ngHung/conghung-commons/issues/13)) ([757839b](https://github.com/C0ngHung/conghung-commons/commit/757839ba800ad3275eaa3c28a4a85922ef393d6b))
+* **release:** integrate github app token to unblock CI ([#14](https://github.com/C0ngHung/conghung-commons/issues/14)) ([1fcb8f2](https://github.com/C0ngHung/conghung-commons/commit/1fcb8f2574d920b2cad48be3e352be421ae98cfc))
+
+
+### Documentation
+
+* **readme:** add snapshot vs release versioning explanation ([#20](https://github.com/C0ngHung/conghung-commons/issues/20)) ([34bdb5f](https://github.com/C0ngHung/conghung-commons/commit/34bdb5ff5e103e3f7c504e101453126878e16c48))
+* update readme with correct api usage and version guide ([#17](https://github.com/C0ngHung/conghung-commons/issues/17)) ([d774037](https://github.com/C0ngHung/conghung-commons/commit/d774037e7c723732fdd129b14444c76eecf9664e))
+
 ## [1.0.0](https://github.com/C0ngHung/conghung-commons/compare/v0.3.0...v1.0.0) (2026-07-07)
 
 
