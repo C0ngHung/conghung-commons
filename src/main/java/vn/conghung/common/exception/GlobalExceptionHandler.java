@@ -32,16 +32,18 @@ import java.util.List;
  * risk of the generic catch-all shadowing a more specific handler declared elsewhere.
  */
 @RestControllerAdvice
-@Order(Ordered.LOWEST_PRECEDENCE)
+@Order
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    private static final String FIELD_REQUEST_BODY = "requestBody";
+
     @ExceptionHandler(TechnicalException.class)
     public ResponseEntity<ApiResult<Void>> handleTechnicalException(ApiException ex, HttpServletRequest request) {
 
-        if (log.isErrorEnabled()) {log.error("Technical failure at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()), ex);
-
+        if (log.isErrorEnabled()) {
+            log.error("Technical failure at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()), ex);
         }
 
         return createErrorResponse(ex.responseCode(), ex.userMessage(), ex.httpStatus());
@@ -112,7 +114,7 @@ public class GlobalExceptionHandler {
             log.warn("Unreadable HTTP message at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()));
         }
 
-        String fieldName = "requestBody";
+        String fieldName = FIELD_REQUEST_BODY;
         String detailMessage;
 
         // Prefer structured Jackson causes over scraping the (version/locale-dependent) message text
@@ -139,7 +141,7 @@ public class GlobalExceptionHandler {
         List<JacksonException.Reference> path = mie.getPath();
 
         if (path == null || path.isEmpty()) {
-            return "requestBody";
+            return FIELD_REQUEST_BODY;
         }
 
         StringBuilder sb = new StringBuilder();
@@ -147,7 +149,7 @@ public class GlobalExceptionHandler {
         for (JacksonException.Reference ref : path) {
             String property = ref.getPropertyName();
             if (property != null) {
-                if (sb.length() > 0) {
+                if (!sb.isEmpty()) {
                     sb.append('.');
                 }
                 sb.append(property);
@@ -156,7 +158,7 @@ public class GlobalExceptionHandler {
             }
         }
 
-        return sb.length() == 0 ? "requestBody" : sb.toString();
+        return sb.isEmpty() ? FIELD_REQUEST_BODY : sb.toString();
     }
 
     /**
@@ -242,8 +244,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResult<Void>> handleGenericException(Exception ex, HttpServletRequest request) {
 
-        if (log.isErrorEnabled()) {log.error("Unhandled exception at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()), ex);
-            
+        if (log.isErrorEnabled()) {
+            log.error("Unhandled exception at {}: {}", sanitize(request.getRequestURI()), sanitize(ex.getMessage()), ex);
         }
 
         return createErrorResponse(ResponseCode.SYS_INTERNAL_ERROR, ResponseCode.SYS_INTERNAL_ERROR.defaultMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
