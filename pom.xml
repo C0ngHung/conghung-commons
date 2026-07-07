@@ -129,6 +129,14 @@
             <artifactId>spring-webmvc</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Test-only: Bean Validation provider so @Valid triggers real
+             MethodArgumentNotValidException in the MockMvc contract test. -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
