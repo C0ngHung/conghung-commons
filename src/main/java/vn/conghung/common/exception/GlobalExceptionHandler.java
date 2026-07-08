@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.jspecify.annotations.Nullable;
+import vn.conghung.common.util.LogSanitizer;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.exc.InvalidFormatException;
 import tools.jackson.databind.exc.MismatchedInputException;
@@ -257,9 +258,6 @@ public class GlobalExceptionHandler {
     }
 
     private @Nullable String sanitize(@Nullable String input) {
-        if (input == null) {
-            return null;
-        }
-        return input.replace('\n', '_').replace('\r', '_');
+        return LogSanitizer.sanitize(input);
     }
 }
