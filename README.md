@@ -69,7 +69,7 @@ Add the dependency:
 <dependency>
     <groupId>vn.conghung</groupId>
     <artifactId>conghung-commons</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
