@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
     <!--
-        Reviewed: 2026-05-22
-        Reason: All log parameters in GlobalExceptionHandler are sanitized via sanitize() method
-                which strips CR/LF characters. FindSecBugs cannot trace custom sanitizers
-                at bytecode level, resulting in false positives.
-        Risk: None — CRLF characters are replaced with '_' before reaching the logger.
+        Reviewed: 2026-07-08
+        Reason: LogSanitizer.sanitize() IS the CRLF cleanser itself — its job is to receive
+                a raw (potentially tainted) string and strip CR/LF. FindSecBugs cannot distinguish
+                "this method cleans the input" from "this method passes tainted input to a sink".
+        Risk: None — this method replaces \r\n with '_' and returns the sanitized result.
+              It is the canonical sanitizer; it does NOT log the input.
+    -->
+    <Match>
+        <Class name="vn.conghung.common.util.LogSanitizer"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!--
+        Reviewed: 2026-07-08 (updated from 2026-05-22)
+        Reason: GlobalExceptionHandler delegates all logging to LogSanitizer.sanitize() via its
+                private sanitize() wrapper. FindSecBugs still cannot trace cross-method sanitization
+                at bytecode level, resulting in false positives on the log.* call sites.
+        Risk: None — all user-supplied strings pass through LogSanitizer.sanitize() before logging.
     -->
     <Match>
         <Class name="vn.conghung.common.exception.GlobalExceptionHandler"/>
